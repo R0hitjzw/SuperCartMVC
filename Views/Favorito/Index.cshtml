@@ -1,0 +1,245 @@
+@model List<SuperCartMVC.Models.Favorito>
+@{ Layout = null; }
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Favoritos — SuperCart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #FF6B35;
+      --orange-dark: #E04E18;
+      --yellow: #FFD166;
+      --teal: #2EC4B6;
+      --bg: #0E0E0F;
+      --bg2: #1A1A1C;
+      --bg3: #242427;
+      --border: #2E2E33;
+      --text: #F0EEE8;
+      --text-dim: #888884;
+      --text-muted: #555552;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    header {
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(14,14,15,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .logo-text { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--orange); letter-spacing: -0.5px; }
+    .logo-text span { color: var(--text); }
+    .header-right { margin-left: auto; display: flex; gap: 0.75rem; align-items: center; }
+    .btn-back {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      color: var(--text-dim);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s;
+    }
+    .btn-back:hover { border-color: var(--orange); color: var(--text); }
+    .page { max-width: 980px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .subtitle { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .card:hover { border-color: var(--orange); transform: translateY(-2px); }
+    .card-img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; padding: 0.8rem; }
+    .card-img-placeholder { width: 100%; aspect-ratio: 1; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+    .card-body { padding: 0.9rem; flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+    .card-market { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--teal); }
+    .card-name { font-size: 0.88rem; color: var(--text); line-height: 1.4; flex: 1; }
+    .card-footer { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 0.5rem; }
+    .card-price { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--orange); }
+    .btn-delete {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.3rem 0.6rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-delete:hover { border-color: #e24b4a; color: #e24b4a; }
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+    .empty .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; color: var(--text-dim); margin-bottom: 0.4rem; }
+    .added-at { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    .tab-btn {
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 1.2rem;
+      color: var(--text-dim);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active { background: var(--orange); border-color: var(--orange); color: white; font-weight: 600; }
+    .tab-btn:hover:not(.active) { border-color: var(--orange); color: var(--text); }
+
+    /* REVIEWS */
+    .review-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.1rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: border-color 0.2s;
+    }
+    .review-card:hover { border-color: var(--teal); }
+    .review-market { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--teal); }
+    .review-name { font-size: 0.88rem; color: var(--text); line-height: 1.4; }
+    .review-stars { color: #FFD166; font-size: 1rem; letter-spacing: 2px; }
+    .review-comment { font-size: 0.83rem; color: var(--text-dim); font-style: italic; }
+    .review-date { font-size: 0.7rem; color: var(--text-muted); }
+    .review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .required-star { color: var(--orange); margin-left: 2px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-text">Super<span>Cart</span></div>
+    <div class="header-right">
+      <a href="/" class="btn-back">← Volver al comparador</a>
+    </div>
+  </header>
+
+  <div class="page">
+  <h1>Mi perfil</h1>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('favoritos')">❤️ Mis favoritos</button>
+    <button class="tab-btn" onclick="showTab('reviews')">⭐ Mis reseñas</button>
+  </div>
+
+  <!-- TAB FAVORITOS -->
+  <div id="tab-favoritos">
+    <p class="subtitle">@Model.Count producto@(Model.Count != 1 ? "s" : "") guardado@(Model.Count != 1 ? "s" : "")</p>
+    @if (!Model.Any())
+    {
+      <div class="empty">
+        <div class="icon">🤍</div>
+        <h3>Aún no tienes favoritos</h3>
+        <p>Busca productos y pulsa el corazón para guardarlos aquí.</p>
+      </div>
+    }
+    else
+    {
+      <div class="grid">
+        @foreach (var fav in Model)
+        {
+          <div class="card">
+            @if (!string.IsNullOrEmpty(fav.Image))
+            {
+              <img class="card-img" src="@fav.Image" alt="@fav.Name" onerror="this.style.display='none'">
+            }
+            else
+            {
+              <div class="card-img-placeholder">🛒</div>
+            }
+            <div class="card-body">
+              <div class="card-market">@fav.Market</div>
+              <div class="card-name">@fav.Name</div>
+              <div class="card-footer">
+                <div class="card-price">@fav.Price.ToString("F2") €</div>
+                <form method="post" asp-action="Delete" asp-controller="Favorito" style="margin:0">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="id" value="@fav.Id" />
+                  <button type="submit" class="btn-delete">✕ Quitar</button>
+                </form>
+              </div>
+              <div class="added-at">Añadido @fav.AddedAt.ToString("dd/MM/yyyy")</div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- TAB REVIEWS -->
+  <div id="tab-reviews" style="display:none">
+    <p class="subtitle" id="reviews-subtitle">Cargando reseñas...</p>
+    <div class="review-grid" id="reviews-grid"></div>
+    <div class="empty" id="reviews-empty" style="display:none">
+      <div class="icon">⭐</div>
+      <h3>Aún no has hecho reseñas</h3>
+      <p>Busca productos y pulsa 💬 para dejar tu opinión.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let reviewsLoaded = false;
+
+  function showTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-favoritos').style.display = tab === 'favoritos' ? '' : 'none';
+    document.getElementById('tab-reviews').style.display  = tab === 'reviews'   ? '' : 'none';
+    event.target.classList.add('active');
+
+    if (tab === 'reviews' && !reviewsLoaded) loadReviews();
+  }
+
+  async function loadReviews() {
+    const res = await fetch('/Review/MisReviews');
+    const reviews = await res.json();
+    reviewsLoaded = true;
+
+    const subtitle = document.getElementById('reviews-subtitle');
+    const grid = document.getElementById('reviews-grid');
+    const empty = document.getElementById('reviews-empty');
+
+    if (reviews.length === 0) {
+      subtitle.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+
+    subtitle.textContent = `${reviews.length} reseña${reviews.length !== 1 ? 's' : ''}`;
+    grid.innerHTML = reviews.map(r => `
+      <div class="review-card">
+        <div class="review-market">${r.market}</div>
+        <div class="review-name">${r.productName}</div>
+        <div class="review-stars">${'★'.repeat(r.estrellas)}${'☆'.repeat(5 - r.estrellas)}</div>
+        ${r.comentario ? `<div class="review-comment">"${r.comentario}"</div>` : '<div class="review-comment" style="color:var(--text-muted)">Sin comentario</div>'}
+        <div class="review-date">${new Date(r.creadaEn).toLocaleDateString('es-ES')}</div>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>

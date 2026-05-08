@@ -1,0 +1,191 @@
+@model List<SuperCartMVC.Models.CartItem>
+@{ Layout = null; }
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Lista de la Compra — SuperCart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #FF6B35; --orange-dark: #E04E18; --yellow: #FFD166;
+      --teal: #2EC4B6; --bg: #0E0E0F; --bg2: #1A1A1C; --bg3: #242427;
+      --border: #2E2E33; --text: #F0EEE8; --text-dim: #888884; --text-muted: #555552;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    header {
+      padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem;
+      border-bottom: 1px solid var(--border); position: sticky; top: 0;
+      background: rgba(14,14,15,0.92); backdrop-filter: blur(12px); z-index: 100;
+    }
+    .logo-text { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--orange); }
+    .logo-text span { color: var(--text); }
+    .btn-back {
+      background: transparent; border: 1px solid var(--border); border-radius: 10px;
+      padding: 0.5rem 1rem; color: var(--text-dim); font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem; cursor: pointer; text-decoration: none; transition: border-color 0.2s;
+    }
+    .btn-back:hover { border-color: var(--orange); color: var(--text); }
+    .page { max-width: 780px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .subtitle { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+    .empty .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; color: var(--text-dim); margin-bottom: 0.4rem; }
+
+    /* LISTA */
+    .cart-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
+    .cart-row {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+      display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1rem;
+      transition: border-color 0.2s;
+    }
+    .cart-row:hover { border-color: var(--border); }
+    .cart-img { width: 56px; height: 56px; object-fit: contain; background: #fff; border-radius: 8px; padding: 4px; flex-shrink: 0; }
+    .cart-img-placeholder { width: 56px; height: 56px; background: var(--bg3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+    .cart-info { flex: 1; min-width: 0; }
+    .cart-market { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--teal); }
+    .cart-name { font-size: 0.88rem; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cart-unit { font-size: 0.7rem; color: var(--text-muted); }
+    .cart-price { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--orange); flex-shrink: 0; min-width: 60px; text-align: right; }
+    .qty-wrap { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+    .qty-btn {
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--text); cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center; transition: border-color 0.15s;
+    }
+    .qty-btn:hover { border-color: var(--orange); color: var(--orange); }
+    .qty-val { min-width: 24px; text-align: center; font-size: 0.9rem; font-weight: 600; }
+    .btn-delete {
+      background: transparent; border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.3rem 0.55rem; color: var(--text-muted); font-size: 0.85rem;
+      cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+    }
+    .btn-delete:hover { border-color: #e24b4a; color: #e24b4a; }
+
+    /* RESUMEN */
+    .summary {
+      background: var(--bg2); border: 1.5px solid var(--border); border-radius: 16px;
+      padding: 1.4rem 1.6rem; display: flex; flex-direction: column; gap: 0.8rem;
+    }
+    .summary-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text-dim); }
+    .summary-total { display: flex; justify-content: space-between; font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--orange); padding-top: 0.6rem; border-top: 1px solid var(--border); }
+    .btn-clear {
+      margin-top: 0.5rem; background: transparent; border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.6rem 1rem; color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer;
+      transition: all 0.15s; width: 100%;
+    }
+    .btn-clear:hover { border-color: #e24b4a; color: #e24b4a; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-text">Super<span>Cart</span></div>
+    <div style="margin-left:auto">
+      <a href="/" class="btn-back">← Volver al comparador</a>
+    </div>
+  </header>
+
+  <div class="page">
+    <h1>🛒 Lista de la compra</h1>
+
+    @if (!Model.Any())
+    {
+      <div class="empty">
+        <div class="icon">🛒</div>
+        <h3>Tu lista está vacía</h3>
+        <p>Busca productos y pulsa el icono del carrito para añadirlos aquí.</p>
+      </div>
+    }
+    else
+    {
+      <p class="subtitle">@Model.Sum(c => c.Quantity) artículo@(Model.Sum(c => c.Quantity) != 1 ? "s" : "") · @Model.Sum(c => c.Price * c.Quantity).ToString("F2") € total</p>
+
+      <div class="cart-list">
+        @foreach (var item in Model)
+        {
+          <div class="cart-row" id="row-@item.Id">
+            @if (!string.IsNullOrEmpty(item.Image))
+            {
+              <img class="cart-img" src="@item.Image" alt="@item.Name" onerror="this.style.display='none'">
+            }
+            else
+            {
+              <div class="cart-img-placeholder">🛒</div>
+            }
+            <div class="cart-info">
+              <div class="cart-market">@item.Market</div>
+              <div class="cart-name" title="@item.Name">@item.Name</div>
+              @if (!string.IsNullOrEmpty(item.PriceUnitOrKg))
+              {
+                <div class="cart-unit">@item.PriceUnitOrKg</div>
+              }
+            </div>
+            <div class="qty-wrap">
+              <button class="qty-btn" onclick="changeQty(@item.Id, @item.Quantity, -1)">−</button>
+              <span class="qty-val" id="qty-@item.Id">@item.Quantity</span>
+              <button class="qty-btn" onclick="changeQty(@item.Id, @item.Quantity, 1)">+</button>
+            </div>
+            <div class="cart-price" id="price-@item.Id">@((item.Price * item.Quantity).ToString("F2")) €</div>
+            <form method="post" asp-action="Delete" asp-controller="Cart" style="margin:0">
+              @Html.AntiForgeryToken()
+              <input type="hidden" name="id" value="@item.Id" />
+              <button type="submit" class="btn-delete">✕</button>
+            </form>
+          </div>
+        }
+      </div>
+
+      <div class="summary">
+        <div class="summary-title">Resumen</div>
+        @foreach (var group in Model.GroupBy(c => c.Market))
+        {
+          <div class="summary-row">
+            <span>@group.Key</span>
+            <span>@group.Sum(c => c.Price * c.Quantity).ToString("F2") €</span>
+          </div>
+        }
+        <div class="summary-total">
+          <span>Total</span>
+          <span id="totalPrice">@Model.Sum(c => c.Price * c.Quantity).ToString("F2") €</span>
+        </div>
+        <form method="post" asp-action="Clear" asp-controller="Cart" style="margin:0">
+          @Html.AntiForgeryToken()
+          <button type="submit" class="btn-clear" onclick="return confirm('¿Vaciar toda la lista?')">🗑 Vaciar lista</button>
+        </form>
+      </div>
+    }
+  </div>
+
+  <script>
+    async function changeQty(id, current, delta) {
+      const newQty = current + delta;
+      if (newQty < 1) return;
+
+      const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+      await fetch('/Cart/UpdateQuantity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+        body: `id=${id}&quantity=${newQty}`
+      });
+
+      document.getElementById(`qty-${id}`).textContent = newQty;
+      // Actualizar precio de la fila (necesitamos el precio unitario)
+      const priceEl = document.getElementById(`price-${id}`);
+      const unitPrice = parseFloat(priceEl.dataset.unit);
+      if (!isNaN(unitPrice)) {
+        priceEl.textContent = (unitPrice * newQty).toFixed(2) + ' €';
+        priceEl.dataset.qty = newQty;
+      }
+      // Recargar para actualizar totales correctamente
+      location.reload();
+    }
+  </script>
+  @Html.AntiForgeryToken()
+</body>
+</html>

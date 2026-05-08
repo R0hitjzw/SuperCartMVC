@@ -1,0 +1,365 @@
+@model List<SuperCartMVC.Models.Review>
+@{ Layout = null; }
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@ViewBag.ProductName — SuperCart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #FF6B35; --orange-dark: #E04E18; --yellow: #FFD166; --teal: #2EC4B6;
+      --bg: #0E0E0F; --bg2: #1A1A1C; --bg3: #242427; --border: #2E2E33;
+      --text: #F0EEE8; --text-dim: #888884; --text-muted: #555552;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    header {
+      padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem;
+      border-bottom: 1px solid var(--border); position: sticky; top: 0;
+      background: rgba(14,14,15,0.92); backdrop-filter: blur(12px); z-index: 100;
+    }
+    .logo-text { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--orange); letter-spacing: -0.5px; }
+    .logo-text span { color: var(--text); }
+    .header-right { margin-left: auto; display: flex; gap: 0.75rem; align-items: center; }
+    .btn-nav {
+      background: transparent; border: 1px solid var(--border); border-radius: 10px;
+      padding: 0.5rem 1rem; color: var(--text-dim); font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem; cursor: pointer; text-decoration: none; transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-nav:hover { border-color: var(--orange); color: var(--text); }
+    .page { max-width: 860px; margin: 0 auto; padding: 2.5rem 1rem 5rem; }
+
+    /* PRODUCT HERO */
+    .product-hero {
+      display: flex; gap: 2rem; align-items: flex-start; margin-bottom: 3rem;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 18px; padding: 2rem;
+    }
+    @@media (max-width: 580px) { .product-hero { flex-direction: column; align-items: center; text-align: center; } }
+    .product-img-wrap {
+      flex-shrink: 0; width: 180px; height: 180px; background: #fff; border-radius: 14px;
+      overflow: hidden; display: flex; align-items: center; justify-content: center;
+    }
+    .product-img-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 1rem; }
+    .product-img-placeholder { font-size: 4rem; }
+    .product-info { flex: 1; display: flex; flex-direction: column; gap: 0.6rem; }
+    .product-market { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--teal); }
+    .product-name { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 700; line-height: 1.2; color: var(--text); }
+    .rating-summary { display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; }
+    .rating-big { font-family: 'Syne', sans-serif; font-size: 3.5rem; font-weight: 800; color: var(--yellow); line-height: 1; }
+    .rating-right { display: flex; flex-direction: column; gap: 0.3rem; }
+    .stars-display { display: flex; gap: 3px; }
+    .star-icon { font-size: 1.3rem; color: var(--text-muted); }
+    .star-icon.filled { color: var(--yellow); }
+    .rating-count { font-size: 0.82rem; color: var(--text-muted); }
+    .no-reviews-badge { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
+
+    /* DISTRIBUTION BARS */
+    .dist-bars { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+    .dist-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); }
+    .dist-bar-wrap { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+    .dist-bar-fill { height: 100%; background: var(--yellow); border-radius: 3px; transition: width 0.6s ease; }
+    .dist-count { min-width: 20px; text-align: right; }
+
+    /* SECTION */
+    .section-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+    .sect-badge { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.15rem 0.55rem; font-size: 0.72rem; color: var(--text-muted); font-weight: 400; font-family: 'DM Sans', sans-serif; }
+
+    /* MY REVIEW FORM */
+    .my-review-box {
+      background: var(--bg2); border: 1.5px solid var(--border); border-radius: 16px;
+      padding: 1.5rem; margin-bottom: 2.5rem; transition: border-color 0.2s;
+    }
+    .my-review-box:focus-within { border-color: var(--orange); }
+    .star-picker { display: flex; gap: 8px; margin-bottom: 1.1rem; }
+    .star-pick { font-size: 1.8rem; cursor: pointer; color: var(--text-muted); transition: color 0.1s, transform 0.1s; user-select: none; }
+    .star-pick.filled { color: var(--yellow); }
+    .star-pick:hover { transform: scale(1.15); }
+    .review-textarea {
+      width: 100%; background: var(--bg3); border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 0.75rem 1rem; color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem; resize: vertical; min-height: 90px; outline: none; margin-bottom: 1rem;
+    }
+    .review-textarea:focus { border-color: var(--orange); }
+    .review-textarea::placeholder { color: var(--text-muted); }
+    .form-actions { display: flex; justify-content: flex-end; }
+    .btn-submit {
+      background: var(--orange); border: none; border-radius: 10px; padding: 0.6rem 1.4rem;
+      color: white; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-submit:hover { background: var(--orange-dark); }
+    .btn-submit:disabled { background: var(--bg3); color: var(--text-muted); cursor: not-allowed; }
+    .form-hint { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+    .success-msg {
+      display: none; background: rgba(46,196,182,0.1); border: 1px solid rgba(46,196,182,0.3);
+      border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.85rem; color: var(--teal); margin-bottom: 0.8rem;
+    }
+
+    /* REVIEWS */
+    .review-card { border-top: 1px solid var(--border); padding: 1.2rem 0; display: flex; flex-direction: column; gap: 0.45rem; animation: fadeUp 0.3s ease both; }
+    @@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .review-header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .reviewer-avatar {
+      width: 34px; height: 34px; border-radius: 50%; background: var(--bg3); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 600; color: var(--orange); flex-shrink: 0;
+    }
+    .reviewer-meta { flex: 1; }
+    .reviewer-email { font-size: 0.82rem; color: var(--text-dim); font-weight: 500; }
+    .reviewer-date { font-size: 0.72rem; color: var(--text-muted); }
+    .review-stars-row { display: flex; gap: 2px; }
+    .rs { font-size: 0.9rem; color: var(--text-muted); }
+    .rs.filled { color: var(--yellow); }
+    .review-comment { font-size: 0.88rem; color: var(--text-dim); line-height: 1.55; padding-left: 0.5rem; border-left: 2px solid var(--border); }
+    .my-review-tag {
+      display: inline-block; background: rgba(255,107,53,0.12); border: 1px solid rgba(255,107,53,0.3);
+      border-radius: 5px; font-size: 0.68rem; color: var(--orange); padding: 0.1rem 0.45rem; font-weight: 600; letter-spacing: 0.5px;
+    }
+    .no-reviews-msg { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+    .no-reviews-msg .icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+    .no-reviews-msg h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; color: var(--text-dim); margin-bottom: 0.3rem; }
+    .auth-prompt { background: var(--bg2); border: 1.5px dashed var(--border); border-radius: 14px; padding: 1.5rem; text-align: center; margin-bottom: 2.5rem; }
+    .auth-prompt p { color: var(--text-dim); font-size: 0.88rem; margin-bottom: 1rem; }
+    .btn-login { background: var(--orange); border: none; border-radius: 10px; padding: 0.6rem 1.4rem; color: white; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.88rem; cursor: pointer; text-decoration: none; display: inline-block; }
+    .btn-login:hover { background: var(--orange-dark); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <svg width="34" height="34" viewBox="0 0 38 38" fill="none">
+      <rect x="10" y="12" width="20" height="14" rx="3" fill="#FF6B35"/>
+      <rect x="8" y="9" width="8" height="4" rx="2" fill="#FF4500"/>
+      <path d="M8 11 Q4 11 4 15 L4 18" stroke="#FF4500" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <circle cx="14" cy="29" r="3.5" fill="#2EC4B6"/><circle cx="14" cy="29" r="1.5" fill="#fff" opacity="0.8"/>
+      <circle cx="24" cy="29" r="3.5" fill="#2EC4B6"/><circle cx="24" cy="29" r="1.5" fill="#fff" opacity="0.8"/>
+    </svg>
+    <a href="/" style="text-decoration:none"><div class="logo-text">Super<span>Cart</span></div></a>
+    <div class="header-right">
+      @if (User.Identity != null && User.Identity.IsAuthenticated)
+      {
+        <span style="color:var(--text-dim);font-size:0.85rem;">@User.Identity.Name</span>
+        <form method="post" asp-action="Logout" asp-controller="Account" style="margin:0">
+          @Html.AntiForgeryToken()
+          <button type="submit" class="btn-nav">Cerrar sesión</button>
+        </form>
+      }
+      else
+      {
+        <a href="/Account/Login" class="btn-nav">Iniciar sesión</a>
+      }
+      <a href="@(!string.IsNullOrEmpty(Context.Request.Query["from"].ToString()) ? "/?q=" + Uri.EscapeDataString(Context.Request.Query["from"].ToString()) : "/")" class="btn-nav">← Volver</a>
+    </div>
+  </header>
+
+  <div class="page">
+
+    <!-- PRODUCT HERO -->
+    <div class="product-hero">
+      <div class="product-img-wrap">
+        @if (!string.IsNullOrEmpty(ViewBag.ProductImage as string))
+        {
+          <img src="@ViewBag.ProductImage" alt="@ViewBag.ProductName"
+               onerror="this.parentElement.innerHTML='<span style=font-size:4rem>🛒</span>'">
+        }
+        else
+        {
+          <span class="product-img-placeholder">🛒</span>
+        }
+      </div>
+      <div class="product-info">
+        <div class="product-market">@ViewBag.Market</div>
+        <div class="product-name">@ViewBag.ProductName</div>
+
+        @{
+          double avg = (double)(ViewBag.AvgRating ?? 0.0);
+          int totalReviews = Model.Count;
+          var distCounts = Enumerable.Range(1, 5)
+            .Select(s => Model.Count(r => r.Estrellas == s))
+            .ToArray();
+          var distJson = System.Text.Json.JsonSerializer.Serialize(distCounts);
+        }
+
+        @if (totalReviews > 0)
+        {
+          <div class="rating-summary">
+            <div class="rating-big">@avg.ToString("F1")</div>
+            <div class="rating-right">
+              <div class="stars-display" id="avgStarsDisplay"></div>
+              <div class="rating-count">@totalReviews reseña@(totalReviews != 1 ? "s" : "") de usuarios</div>
+            </div>
+          </div>
+          <div class="dist-bars" id="distBars"></div>
+        }
+        else
+        {
+          <div class="no-reviews-badge">Sin valoraciones aún — ¡sé el primero!</div>
+        }
+      </div>
+    </div>
+
+    <!-- FORMULARIO O PROMPT LOGIN -->
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+      <div class="section-title">
+        ✏️ Tu valoración
+        @if ((int)(ViewBag.MyStars ?? 0) > 0)
+        {
+          <span class="sect-badge">Ya has valorado este producto</span>
+        }
+      </div>
+      <div class="my-review-box">
+        <div class="form-hint">Selecciona las estrellas y escribe tu opinión (opcional)</div>
+        <div class="star-picker" id="starPicker">
+          <span class="star-pick" data-val="1">★</span>
+          <span class="star-pick" data-val="2">★</span>
+          <span class="star-pick" data-val="3">★</span>
+          <span class="star-pick" data-val="4">★</span>
+          <span class="star-pick" data-val="5">★</span>
+        </div>
+        <textarea class="review-textarea" id="reviewComment"
+                  placeholder="Escribe tu comentario (opcional)...">@(ViewBag.MyComment ?? "")</textarea>
+        <div class="success-msg" id="successMsg">✓ ¡Reseña guardada correctamente!</div>
+        <div class="form-actions">
+          <button class="btn-submit" id="btnSubmit" onclick="submitReview()" disabled>Guardar reseña</button>
+        </div>
+      </div>
+    }
+    else
+    {
+      <div class="auth-prompt">
+        <p>Inicia sesión para dejar tu valoración y ayudar a otros compradores.</p>
+        <a href="/Account/Login" class="btn-login">Iniciar sesión</a>
+      </div>
+    }
+
+    <!-- LISTA DE RESEÑAS -->
+    <div class="reviews-section">
+      <div class="section-title">
+        💬 Reseñas <span class="sect-badge">@totalReviews</span>
+      </div>
+
+      @if (!Model.Any())
+      {
+        <div class="no-reviews-msg">
+          <div class="icon">⭐</div>
+          <h3>Sin reseñas todavía</h3>
+          <p>Sé el primero en valorar este producto.</p>
+        </div>
+      }
+      else
+      {
+        @foreach (var (review, idx) in Model.Select((r, i) => (r, i)))
+        {
+          var isMyReview = User.Identity != null && User.Identity.IsAuthenticated
+                           && review.User?.Email == User.Identity.Name;
+          <div class="review-card" style="animation-delay:@(idx * 40)ms">
+            <div class="review-header">
+              <div class="reviewer-avatar">@(review.User?.Email?.Substring(0,1).ToUpper() ?? "?")</div>
+              <div class="reviewer-meta">
+                <div class="reviewer-email">
+                  @review.User?.Email
+                  @if (isMyReview)
+                  {
+                    <span class="my-review-tag">TÚ</span>
+                  }
+                </div>
+                <div class="reviewer-date">@review.CreadaEn.ToString("dd/MM/yyyy")</div>
+              </div>
+              <div class="review-stars-row">
+                @for (int s = 1; s <= 5; s++)
+                {
+                  <span class="rs @(s <= review.Estrellas ? "filled" : "")">★</span>
+                }
+              </div>
+            </div>
+            @if (!string.IsNullOrEmpty(review.Comentario))
+            {
+              <div class="review-comment">@review.Comentario</div>
+            }
+          </div>
+        }
+      }
+    </div>
+
+  </div>
+
+  @Html.AntiForgeryToken()
+
+  <script>
+    const MARKET       = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((string)ViewBag.Market));
+    const PRODUCT_NAME = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((string)(ViewBag.ProductName ?? "")));
+    const PRODUCT_IMG  = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((string)(ViewBag.ProductImage ?? "")));
+    const IS_AUTH      = @(User.Identity != null && User.Identity.IsAuthenticated ? "true" : "false");
+    const AVG_RATING   = @(avg.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+    const TOTAL        = @totalReviews;
+    const DIST_COUNTS  = @Html.Raw(distJson);
+    let selectedStars  = @((int)(ViewBag.MyStars ?? 0));
+
+    /* Avg stars */
+    (function () {
+      const el = document.getElementById('avgStarsDisplay');
+      if (!el) return;
+      let html = '';
+      for (let i = 1; i <= 5; i++) {
+        if (AVG_RATING >= i)           html += '<span class="star-icon filled">★</span>';
+        else if (AVG_RATING >= i - 0.5) html += '<span class="star-icon" style="color:#FFD166;opacity:0.5">★</span>';
+        else                            html += '<span class="star-icon">★</span>';
+      }
+      el.innerHTML = html;
+    })();
+
+    /* Distribution bars */
+    (function () {
+      const el = document.getElementById('distBars');
+      if (!el || TOTAL === 0) return;
+      let html = '';
+      for (let s = 5; s >= 1; s--) {
+        const cnt = DIST_COUNTS[s - 1];
+        const pct = Math.round(cnt / TOTAL * 100);
+        html += `<div class="dist-row">
+          <span style="min-width:14px">${s}</span>
+          <span style="color:#FFD166;font-size:0.8rem">★</span>
+          <div class="dist-bar-wrap"><div class="dist-bar-fill" style="width:${pct}%"></div></div>
+          <span class="dist-count">${cnt}</span>
+        </div>`;
+      }
+      el.innerHTML = html;
+    })();
+
+    /* Star picker */
+    function updatePickerStars(val) {
+      document.querySelectorAll('.star-pick').forEach(s =>
+        s.classList.toggle('filled', parseInt(s.dataset.val) <= val));
+      const btn = document.getElementById('btnSubmit');
+      if (btn) btn.disabled = val === 0;
+    }
+    updatePickerStars(selectedStars);
+
+    document.querySelectorAll('.star-pick').forEach(s => {
+      s.addEventListener('click',     () => { selectedStars = parseInt(s.dataset.val); updatePickerStars(selectedStars); });
+      s.addEventListener('mouseover', () => updatePickerStars(parseInt(s.dataset.val)));
+      s.addEventListener('mouseout',  () => updatePickerStars(selectedStars));
+    });
+
+    /* Submit */
+    async function submitReview() {
+      if (!IS_AUTH || selectedStars === 0) return;
+      const comentario = document.getElementById('reviewComment').value;
+      const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+      const res = await fetch('/Review/Create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+        body: `market=${encodeURIComponent(MARKET)}&productName=${encodeURIComponent(PRODUCT_NAME)}&productImage=${encodeURIComponent(PRODUCT_IMG)}&estrellas=${selectedStars}&comentario=${encodeURIComponent(comentario)}`
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('successMsg').style.display = 'block';
+        setTimeout(() => location.reload(), 1200);
+      }
+    }
+  </script>
+</body>
+</html>

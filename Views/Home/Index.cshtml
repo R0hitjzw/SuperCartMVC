@@ -1,0 +1,1515 @@
+﻿@{
+  Layout = null; // aixo es temporal fins que tinguem log in i altres pagines, ara mateix nomes tenim aquesta
+}
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SuperCart</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link
+  href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+  rel="stylesheet">
+  <style>
+      :root {
+        --orange: #FF6B35;
+        --orange-dark: #E04E18;
+        --yellow: #FFD166;
+        --teal: #2EC4B6;
+        --bg: #0E0E0F;
+        --bg2: #1A1A1C;
+        --bg3: #242427;
+        --border: #2E2E33;
+        --text: #F0EEE8;
+        --text-dim: #888884;
+        --text-muted: #555552;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        min-height: 100vh;
+      }
+
+      /* HEADER */
+      header {
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: rgba(14, 14, 15, 0.92);
+        backdrop-filter: blur(12px);
+        z-index: 100;
+      }
+
+      .logo-icon {
+        width: 38px;
+        height: 38px;
+      }
+
+      .logo-text {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--orange);
+        letter-spacing: -0.5px;
+      }
+
+      .logo-text span {
+        color: var(--text);
+      }
+
+      /* HERO */
+      .hero {
+        padding: 4rem 2rem 2rem;
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .hero h1 {
+        font-family: 'Syne', sans-serif;
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 0.8rem;
+        letter-spacing: -1px;
+      }
+
+      .hero h1 em {
+        font-style: normal;
+        color: var(--orange);
+      }
+
+      .hero p {
+        color: var(--text-dim);
+        font-size: 1rem;
+        margin-bottom: 2.5rem;
+        font-weight: 300;
+      }
+
+      /* SEARCH */
+      .search-wrap {
+        max-width: 680px;
+        margin: 0 auto 1.5rem;
+        position: relative;
+      }
+
+      .search-row {
+        display: flex;
+        gap: 0.75rem;
+        background: var(--bg2);
+        border: 1.5px solid var(--border);
+        border-radius: 14px;
+        padding: 0.5rem 0.5rem 0.5rem 1.2rem;
+        transition: border-color 0.2s;
+      }
+
+      .search-row:focus-within {
+        border-color: var(--orange);
+      }
+
+      .search-row input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.05rem;
+        font-weight: 400;
+      }
+
+      .search-row input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .btn-search {
+        background: var(--orange);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.65rem 1.4rem;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+        white-space: nowrap;
+      }
+
+      .btn-search:hover {
+        background: var(--orange-dark);
+      }
+
+      .btn-search:active {
+        transform: scale(0.97);
+      }
+
+      /* FILTERS */
+      .filters-wrap {
+        max-width: 680px;
+        margin: 0 auto 2rem;
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .filter-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 500;
+        margin-right: 0.2rem;
+      }
+
+      .filter-btn {
+        background: var(--bg2);
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        padding: 0.4rem 0.9rem;
+        color: var(--text-dim);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-weight: 400;
+      }
+
+      .filter-btn:hover {
+        border-color: var(--orange);
+        color: var(--text);
+      }
+
+      .filter-btn.active {
+        background: var(--orange);
+        border-color: var(--orange);
+        color: white;
+        font-weight: 500;
+      }
+
+      #btnTodos.none-selected {
+        background: var(--bg3);
+        border-color: var(--text-muted);
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+
+      /* SORT */
+      .sort-wrap {
+        max-width: 980px;
+        margin: 0 auto 1.2rem;
+        padding: 0 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .results-count {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+
+      .results-count strong {
+        color: var(--orange);
+        font-weight: 600;
+      }
+
+      .sort-row {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+      }
+
+      .sort-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .sort-btn {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.3rem 0.75rem;
+        color: var(--text-dim);
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: 'DM Sans', sans-serif;
+      }
+
+      .sort-btn:hover {
+        border-color: var(--teal);
+        color: var(--teal);
+      }
+
+      .sort-btn.active {
+        background: var(--teal);
+        border-color: var(--teal);
+        color: white;
+      }
+
+      /* GRID */
+      .grid {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 0 1rem 4rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+
+      /* CARD */
+      .card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        transition: border-color 0.2s, transform 0.15s;
+        display: flex;
+        flex-direction: column;
+        animation: fadeUp 0.3s ease both;
+      }
+
+      @@keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .card:hover {
+        border-color: var(--orange);
+        transform: translateY(-2px);
+      }
+
+      .card-img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: contain;
+        background: #fff;
+        padding: 0.8rem;
+      }
+
+      .card-img-placeholder {
+        width: 100%;
+        aspect-ratio: 1;
+        background: var(--bg3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+      }
+
+      .card-body {
+        padding: 0.9rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .card-market {
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--teal);
+      }
+
+      .card-name {
+        font-size: 0.88rem;
+        font-weight: 400;
+        color: var(--text);
+        line-height: 1.4;
+        flex: 1;
+      }
+
+      .card-footer {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+      }
+
+      .card-price {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--orange);
+      }
+
+      .card-unit {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-align: right;
+        line-height: 1.3;
+      }
+
+      /* STATES */
+      .state-wrap {
+        max-width: 980px;
+        margin: 4rem auto;
+        text-align: center;
+        color: var(--text-muted);
+        padding: 0 1rem;
+      }
+
+      .state-wrap .icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+
+      .state-wrap h3 {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.2rem;
+        color: var(--text-dim);
+        margin-bottom: 0.4rem;
+      }
+
+      .state-wrap p {
+        font-size: 0.88rem;
+      }
+
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid var(--border);
+        border-top-color: var(--orange);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin: 0 auto 1rem;
+      }
+
+      @@keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ERROR BANNER */
+      .error-banner {
+        max-width: 680px;
+        margin: 0 auto 1.5rem;
+        background: rgba(255, 107, 53, 0.1);
+        border: 1px solid rgba(255, 107, 53, 0.3);
+        border-radius: 10px;
+        padding: 0.8rem 1.2rem;
+        font-size: 0.85rem;
+        color: var(--orange);
+        display: none;
+      }
+
+      /* MARKET BADGE COLORS */
+      .market-MERCADONA { color: #00a650; }
+      .market-DIA       { color: #e30713; }
+      .market-CONSUM    { color: #e4002b; }
+      .market-ALDI      { color: #00529b; }
+      .market-ALCAMPO   { color: #E4002B; }
+      .market-AMETLLER  { color: #cc0000; }
+      .market-BONPREU   { color: #ff6b35; }
+      .market-CONDIS    { color: #00a650; }
+
+      /* FAVORITO BTN */
+      .btn-fav {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 0.2rem;
+        transition: transform 0.15s;
+        line-height: 1;
+      }
+      .btn-fav:hover { transform: scale(1.2); }
+      .btn-fav svg { color: var(--text-muted); transition: fill 0.2s, stroke 0.2s; }
+      .btn-fav.favorited svg { fill: #e74c3c; stroke: #e74c3c; }
+
+      /* ESTRELLAS */
+      .stars { display: flex; gap: 2px; margin-top: 0.3rem; }
+      .star { font-size: 0.75rem; cursor: pointer; color: var(--text-muted); transition: color 0.1s; }
+      .star.filled { color: #FFD166; }
+
+      /* MODAL REVIEW */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-overlay.open { display: flex; }
+      .modal {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.8rem;
+        width: 100%;
+        max-width: 420px;
+        margin: 1rem;
+      }
+      .modal h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; margin-bottom: 0.3rem; }
+      .modal .product-ref { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.2rem; }
+      .modal-stars { display: flex; gap: 6px; margin-bottom: 1rem; }
+      .modal-star { font-size: 1.6rem; cursor: pointer; color: var(--text-muted); transition: color 0.1s; }
+      .modal-star.filled { color: #FFD166; }
+      .modal textarea {
+        width: 100%;
+        background: var(--bg3);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        padding: 0.7rem 1rem;
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.9rem;
+        resize: vertical;
+        min-height: 80px;
+        outline: none;
+        margin-bottom: 1rem;
+      }
+      .modal textarea:focus { border-color: var(--orange); }
+      .modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+      .btn-cancel {
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        color: var(--text-dim);
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+      }
+      .btn-submit {
+        background: var(--orange);
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.2rem;
+        color: white;
+        cursor: pointer;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+      }
+      .btn-submit:hover { background: var(--orange-dark); }
+      .reviews-list { margin-top: 1rem; max-height: 200px; overflow-y: auto; }
+      .review-item { border-top: 1px solid var(--border); padding: 0.6rem 0; font-size: 0.82rem; }
+      .review-item .r-stars { color: #FFD166; font-size: 0.75rem; }
+      .review-item .r-comment { color: var(--text-dim); margin-top: 0.2rem; }
+      .review-item .r-user { color: var(--text-muted); font-size: 0.72rem; margin-top: 0.2rem; }
+      .avg-rating { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-dim); }
+      .avg-rating .big { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--yellow); }
+
+      /* PRODUCT PANEL */
+      .product-panel {
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        display: flex;
+        pointer-events: none;
+      }
+      .product-panel.open { pointer-events: all; }
+      .panel-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0);
+        transition: background 0.3s;
+        cursor: pointer;
+      }
+      .product-panel.open .panel-backdrop { background: rgba(0,0,0,0.6); }
+      .panel-drawer {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: min(580px, 100vw);
+        background: var(--bg2);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+        overflow: hidden;
+      }
+      .product-panel.open .panel-drawer { transform: translateX(0); }
+      .panel-header {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-shrink: 0;
+      }
+      .panel-close {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-dim);
+        font-size: 1rem;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color 0.15s;
+        flex-shrink: 0;
+      }
+      .panel-close:hover { border-color: var(--orange); color: var(--text); }
+      .panel-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .panel-body { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem; }
+
+      .panel-product-top { display: flex; gap: 1rem; align-items: flex-start; }
+      .panel-img-wrap { width: 100px; height: 100px; background: #fff; border-radius: 12px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+      .panel-img-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 0.5rem; }
+      .panel-product-info { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+      .panel-market { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--teal); }
+      .panel-name { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+
+      .panel-avg { display: flex; align-items: center; gap: 0.8rem; }
+      .panel-avg-big { font-family: 'Syne', sans-serif; font-size: 2.8rem; font-weight: 800; color: var(--yellow); line-height: 1; }
+      .panel-avg-right { display: flex; flex-direction: column; gap: 0.25rem; }
+      .panel-stars { display: flex; gap: 2px; }
+      .pstar { font-size: 1.1rem; color: var(--text-muted); }
+      .pstar.filled { color: var(--yellow); }
+      .panel-count { font-size: 0.78rem; color: var(--text-muted); }
+
+      .panel-dist { display: flex; flex-direction: column; gap: 0.3rem; }
+      .panel-dist-row { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--text-muted); }
+      .panel-bar-wrap { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+      .panel-bar-fill { height: 100%; background: var(--yellow); border-radius: 3px; transition: width 0.5s ease; }
+
+      .panel-form-title { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.6rem; }
+      .panel-star-picker { display: flex; gap: 6px; margin-bottom: 0.8rem; }
+      .panel-star { font-size: 1.6rem; cursor: pointer; color: var(--text-muted); transition: color 0.1s, transform 0.1s; user-select: none; }
+      .panel-star.filled { color: var(--yellow); }
+      .panel-star:hover { transform: scale(1.15); }
+      .panel-textarea {
+        width: 100%; background: var(--bg3); border: 1.5px solid var(--border); border-radius: 10px;
+        padding: 0.65rem 0.9rem; color: var(--text); font-family: 'DM Sans', sans-serif;
+        font-size: 0.88rem; resize: vertical; min-height: 75px; outline: none; margin-bottom: 0.75rem;
+      }
+      .panel-textarea:focus { border-color: var(--orange); }
+      .panel-textarea::placeholder { color: var(--text-muted); }
+      .panel-btn-submit {
+        background: var(--orange); border: none; border-radius: 8px; padding: 0.55rem 1.2rem;
+        color: white; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; transition: background 0.15s;
+      }
+      .panel-btn-submit:hover { background: var(--orange-dark); }
+      .panel-btn-submit:disabled { background: var(--bg3); color: var(--text-muted); cursor: not-allowed; }
+      .panel-success { display: none; background: rgba(46,196,182,0.1); border: 1px solid rgba(46,196,182,0.3); border-radius: 8px; padding: 0.5rem 0.9rem; font-size: 0.82rem; color: var(--teal); margin-bottom: 0.6rem; }
+      .panel-auth-prompt { background: var(--bg3); border: 1px dashed var(--border); border-radius: 10px; padding: 1rem; text-align: center; font-size: 0.85rem; color: var(--text-dim); }
+      .panel-auth-prompt a { color: var(--orange); text-decoration: none; font-weight: 600; }
+
+      .panel-review { border-top: 1px solid var(--border); padding: 0.9rem 0; display: flex; flex-direction: column; gap: 0.35rem; }
+      .panel-review-header { display: flex; align-items: center; gap: 0.6rem; }
+      .panel-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 600; color: var(--orange); flex-shrink: 0; }
+      .panel-reviewer-email { font-size: 0.78rem; color: var(--text-dim); flex: 1; }
+      .panel-reviewer-date { font-size: 0.68rem; color: var(--text-muted); }
+      .panel-review-stars { display: flex; gap: 1px; }
+      .prstar { font-size: 0.78rem; color: var(--text-muted); }
+      .prstar.filled { color: var(--yellow); }
+      .panel-review-comment { font-size: 0.83rem; color: var(--text-dim); line-height: 1.5; padding-left: 0.5rem; border-left: 2px solid var(--border); }
+      .panel-no-reviews { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1.5rem 0; }
+      .panel-spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 2rem auto; }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <svg class="logo-icon" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="12" width="20" height="14" rx="3" fill="#FF6B35" />
+      <rect x="8" y="9" width="8" height="4" rx="2" fill="#FF4500" />
+      <path d="M8 11 Q4 11 4 15 L4 18" stroke="#FF4500" stroke-width="2.5" stroke-linecap="round" fill="none" />
+      <circle cx="14" cy="29" r="3.5" fill="#2EC4B6" />
+      <circle cx="14" cy="29" r="1.5" fill="#fff" opacity="0.8" />
+      <circle cx="24" cy="29" r="3.5" fill="#2EC4B6" />
+      <circle cx="24" cy="29" r="1.5" fill="#fff" opacity="0.8" />
+    </svg>
+    <div class="logo-text">Super<span>Cart</span></div>
+
+    <div style="margin-left: auto; display: flex; gap: 0.75rem; align-items: center;">
+      @if (User.Identity != null && User.Identity.IsAuthenticated)
+      {
+        <span style="color: var(--text-dim); font-size: 0.85rem;">@(User.Identity!.Name?.Split('@')[0] ?? User.Identity.Name)</span>
+        <a href="/Favorito" class="btn-search"
+           style="background: var(--bg3); border: 1px solid var(--border); color: var(--yellow); text-decoration: none;">
+          ❤️ Favoritos
+        </a>
+        <a href="/Cart" class="btn-search"
+           style="background: var(--bg3); border: 1px solid var(--border); color: var(--teal); text-decoration: none;">
+          🛒 Mi lista
+        </a>
+        <form method="post" asp-action="Logout" asp-controller="Account" style="margin:0">
+          @Html.AntiForgeryToken()
+          <button type="submit" class="btn-search"
+                  style="background: var(--bg3); border: 1px solid var(--border); color: var(--text-dim);">
+            Cerrar sesión
+          </button>
+        </form>
+      }
+      else
+      {
+        <a href="/Account/Login" class="btn-search"
+           style="background: transparent; border: 1px solid var(--border); color: var(--text-dim); text-decoration: none;">
+          Iniciar sesión
+        </a>
+        <a href="/Account/Register" class="btn-search" style="text-decoration: none;">
+          Registrarse
+        </a>
+      }
+    </div>
+  </header>
+
+  <div class="hero">
+    <h1>Compara precios en<br><em>todos los supermercados</em></h1>
+    <p>Busca cualquier producto y compara precios al instante entre Mercadona, Consum, Aldi y más.</p>
+
+    <div class="search-wrap">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Busca un producto... ej: leche entera" autocomplete="off" />
+        <button class="btn-search" onclick="search()">Buscar</button>
+      </div>
+    </div>
+
+    <div class="filters-wrap">
+      <span class="filter-label">Mercado</span>
+      <button class="filter-btn active" id="btnTodos" data-market="all" onclick="toggleMarket(this)">Todos</button>
+      <button class="filter-btn" data-market="MERCADONA" onclick="toggleMarket(this)">Mercadona</button>
+      <button class="filter-btn" data-market="CONSUM" onclick="toggleMarket(this)">Consum</button>
+      <button class="filter-btn" data-market="ALDI" onclick="toggleMarket(this)">Aldi</button>
+      <button class="filter-btn" data-market="DIA" onclick="toggleMarket(this)">DIA</button>
+      <button class="filter-btn" data-market="ALCAMPO" onclick="toggleMarket(this)">Alcampo</button>
+      <button class="filter-btn" data-market="AMETLLER" onclick="toggleMarket(this)">Ametller</button>
+      <button class="filter-btn" data-market="BONPREU" onclick="toggleMarket(this)">Bonpreu</button>
+      <button class="filter-btn" data-market="CONDIS" onclick="toggleMarket(this)">Condis</button>
+    </div>
+  </div>
+
+  <div id="errorBanner" class="error-banner"></div>
+
+  <div id="sortWrap" class="sort-wrap" style="display:none">
+    <div class="results-count" id="resultsCount"></div>
+    <div class="sort-row">
+      <span class="sort-label">Ordenar</span>
+      <button class="sort-btn active" data-sort="relevance" onclick="setSort(this)">Relevancia</button>
+      <button class="sort-btn" data-sort="price-asc" onclick="setSort(this)">Precio ↑</button>
+      <button class="sort-btn" data-sort="price-desc" onclick="setSort(this)">Precio ↓</button>
+      <button class="sort-btn" data-sort="unitprice-asc" onclick="setSort(this)">Precio/kg ↑</button>
+      <button class="sort-btn" data-sort="market" onclick="setSort(this)">Mercado</button>
+      <button class="sort-btn" data-sort="rating" onclick="setSort(this)">⭐ Mejor valorado</button>
+    </div>
+  </div>
+
+  <div id="stateWrap" class="state-wrap">
+    <div class="icon">🔍</div>
+    <h3>¿Qué estás buscando hoy?</h3>
+    <p>Escribe un producto arriba para comparar precios entre supermercados.</p>
+  </div>
+
+  <!-- MODAL REVIEW -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3>Reseña del producto</h3>
+      <div class="product-ref" id="modalProductRef"></div>
+      <div class="avg-rating" id="modalAvg"></div>
+      <div class="modal-stars" id="modalStars">
+        <span class="modal-star" data-val="1">⭐</span>
+        <span class="modal-star" data-val="2">⭐</span>
+        <span class="modal-star" data-val="3">⭐</span>
+        <span class="modal-star" data-val="4">⭐</span>
+        <span class="modal-star" data-val="5">⭐</span>
+      </div>
+      <textarea id="modalComment" placeholder="Escribe tu comentario (opcional)..."></textarea>
+      <div class="reviews-list" id="reviewsList"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-submit" onclick="submitReview()">Guardar reseña</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bestByMarketWrap" style="display:none; max-width:980px; margin: 0 auto 0.5rem; padding: 0 1rem;">
+    <button onclick="toggleBestByMarket()" id="bestByMarketBtn" style="
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 1.1rem;
+      color: var(--yellow);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    ">
+      🏆 Mejor opción por supermercado <span id="bestChevron">▼</span>
+    </button>
+    <div id="bestByMarket" style="display:none; margin-top:0.8rem;">
+      <div id="bestByMarketGrid" style="display:flex; gap:0.6rem; flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <!-- PRODUCT PANEL DRAWER -->
+  <div class="product-panel" id="productPanel">
+    <div class="panel-backdrop" onclick="closeProductPanel()"></div>
+    <div class="panel-drawer">
+      <div class="panel-header">
+        <button class="panel-close" onclick="closeProductPanel()">✕</button>
+        <div class="panel-title" id="panelTitle"></div>
+      </div>
+      <div class="panel-body" id="panelBody">
+        <div class="panel-spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="grid" class="grid"></div>
+
+  <script>
+      const API = '';
+
+      // Restaurar búsqueda si venimos de la vista de detalle
+      window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('q');
+        if (q) {
+          document.getElementById('searchInput').value = q;
+          search();
+        }
+      });
+
+      const isAuth = @(User.Identity != null && User.Identity.IsAuthenticated ? "true" : "false");
+
+      let allProducts = [];
+      let currentSort = 'relevance';
+      let selectedMarkets = new Set(['all']);
+      let lastBestByMarketTerm = '';
+      let lastBestByMarketAll = [];
+      let lastBestByMarketResult = [];
+
+      let debounceTimer = null;
+
+      document.getElementById('searchInput').addEventListener('input', e => {
+        const term = e.target.value.trim();
+        clearTimeout(debounceTimer);
+        if (term.length < 2) return;
+        debounceTimer = setTimeout(() => { search(); }, 2000);
+      });
+
+      document.getElementById('searchInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          clearTimeout(debounceTimer);
+          search();
+        }
+      });
+
+      function toggleMarket(btn) {
+        const market = btn.dataset.market;
+        const btnTodos = document.getElementById('btnTodos');
+
+        if (market === 'all') {
+          if (selectedMarkets.has('all')) {
+            selectedMarkets = new Set();
+            btnTodos.classList.remove('active');
+            btnTodos.classList.add('none-selected');
+            document.querySelectorAll('.filter-btn[data-market]:not([data-market="all"])').forEach(b => b.classList.remove('active'));
+          } else {
+            selectedMarkets = new Set(['all']);
+            btnTodos.classList.add('active');
+            btnTodos.classList.remove('none-selected');
+            document.querySelectorAll('.filter-btn[data-market]:not([data-market="all"])').forEach(b => b.classList.remove('active'));
+          }
+        } else {
+          if (selectedMarkets.has(market)) {
+            selectedMarkets.delete(market);
+            btn.classList.remove('active');
+          } else {
+            selectedMarkets.add(market);
+            btn.classList.add('active');
+          }
+          selectedMarkets.delete('all');
+          btnTodos.classList.remove('active');
+          if (selectedMarkets.size === 0) {
+            selectedMarkets = new Set(['all']);
+            btnTodos.classList.add('active');
+            btnTodos.classList.remove('none-selected');
+          } else {
+            btnTodos.classList.add('none-selected');
+          }
+        }
+
+        const term = document.getElementById('searchInput').value.trim();
+        if (term && term.length >= 2) {
+          if (selectedMarkets.has('all') || allProducts.length === 0) {
+            search();
+          } else {
+            renderProducts();
+          }
+        }
+      }
+
+      function setSort(btn) {
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSort = btn.dataset.sort;
+        if (currentSort === 'rating') {
+          loadRatingsAndSort([...allProducts]).then(sorted => {
+            allProducts = sorted;
+            renderProducts();
+          });
+        } else {
+          renderProducts();
+        }
+      }
+
+      async function search() {
+        const term = document.getElementById('searchInput').value.trim();
+        if (!term) return;
+
+        showState('loading');
+        hideError();
+
+        const marketsParam = selectedMarkets.has('all') ? '' :
+          '&' + [...selectedMarkets].map(m => `markets=${m}`).join('&');
+
+        try {
+          const res = await fetch(`/find?term=${encodeURIComponent(term)}${marketsParam}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          allProducts = await res.json();
+
+          if (allProducts.length === 0) {
+            showState('empty');
+          } else {
+            hideState();
+            renderProducts();
+          }
+        } catch (err) {
+          showState('hidden');
+          showError(`No se pudo conectar con el backend (${err.message}). ¿Está corriendo dotnet run?`);
+        }
+      }
+
+      function renderProducts() {
+        const term = document.getElementById('searchInput').value.trim().toLowerCase();
+        let products = [...allProducts];
+
+        if (!selectedMarkets.has('all')) {
+          products = products.filter(p => selectedMarkets.has(p.market));
+        }
+
+        if (currentSort === 'price-asc') {
+          products.sort((a, b) => a.price - b.price);
+        } else if (currentSort === 'price-desc') {
+          products.sort((a, b) => b.price - a.price);
+        } else if (currentSort === 'unitprice-asc') {
+          products.sort((a, b) => {
+            const ua = a.unitPrice ?? Infinity;
+            const ub = b.unitPrice ?? Infinity;
+            return ua - ub;
+          });
+        } else if (currentSort === 'market') {
+          products.sort((a, b) => a.market.localeCompare(b.market));
+        } else if (currentSort === 'rating') {
+          // Ya viene ordenado
+        } else {
+          const termWords = removeAccents(term).split(' ');
+          products.sort((a, b) => {
+            const nameA = removeAccents(a.name.toLowerCase());
+            const nameB = removeAccents(b.name.toLowerCase());
+            const wordsA = nameA.split(/[\s,\-]+/);
+            const wordsB = nameB.split(/[\s,\-]+/);
+            const startA = termWords.filter(t => wordsA[0] === t).length;
+            const startB = termWords.filter(t => wordsB[0] === t).length;
+            if (startB !== startA) return startB - startA;
+            const purityA = termWords.filter(t => wordsA.includes(t)).length / wordsA.length;
+            const purityB = termWords.filter(t => wordsB.includes(t)).length / wordsB.length;
+            if (purityB !== purityA) return purityB - purityA;
+            return a.price - b.price;
+          });
+        }
+
+        markFavoritos(products);
+        markCart(products);
+
+        document.getElementById('sortWrap').style.display = 'flex';
+        document.getElementById('resultsCount').innerHTML =
+          `<strong>${products.length}</strong> productos encontrados`;
+
+        renderBestByMarket(products);
+        document.getElementById('bestByMarketWrap').style.display = 'block';
+        document.getElementById('bestByMarket').style.display = 'none';
+        document.getElementById('bestChevron').textContent = '▼';
+
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+
+        products.forEach((p, i) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.animationDelay = `${Math.min(i * 30, 300)}ms`;
+          card.dataset.market = p.market;
+          card.dataset.name = p.name;
+          card.dataset.image = p.image;
+
+          const imgHtml = p.image
+            ? `<img class="card-img" src="${p.image}" alt="${p.name}" onerror="this.style.display='none'">`
+            : `<div class="card-img-placeholder">🛒</div>`;
+
+          const cartBtn = isAuth
+            ? `<button class="btn-fav" data-market-cart="${escHtml(p.market)}" data-name-cart="${escHtml(p.name)}" data-price-cart="${p.price.toFixed(4)}" onclick="toggleCart(this, '${escHtml(p.market)}','${escHtml(p.name)}',${p.price.toFixed(4)},'${escHtml(p.image)}','${escHtml(p.priceUnitOrKg || '')}')">🛒</button>`
+            : '';
+
+          const favBtn = isAuth
+            ? `<button class="btn-fav" data-market="${escHtml(p.market)}" data-name="${escHtml(p.name)}" data-price="${p.price.toFixed(4)}" onclick="toggleFav(this, '${escHtml(p.market)}','${escHtml(p.name)}',${p.price.toFixed(4)},'${escHtml(p.image)}','${escHtml(p.priceUnitOrKg || '')}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>`
+            : '';
+
+          const reviewBtn = isAuth
+            ? `<button class="btn-fav" style="font-size:0.75rem;color:var(--text-muted)" onclick="openModal(this)">💬</button>`
+            : '';
+
+          const avgStars = p._avgRating ? renderStarsMini(p._avgRating) : '';
+
+          card.innerHTML = `
+            <div onclick="openProductPanel('${escHtml(p.market)}','${escHtml(p.name)}','${escHtml(p.image ?? '')}')" style="cursor:pointer">
+              ${imgHtml}
+            </div>
+            <div class="card-body">
+              <div class="card-market market-${p.market}">${p.market}</div>
+              <div class="card-name" style="cursor:pointer" onclick="openProductPanel('${escHtml(p.market)}','${escHtml(p.name)}','${escHtml(p.image ?? '')}')">
+                ${p.name}
+              </div>
+              <div class="stars">${avgStars}</div>
+              <div class="card-footer">
+                <div class="card-price">${p.productPrice}</div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  ${reviewBtn}
+                  ${favBtn}
+                  ${cartBtn}
+                </div>
+              </div>
+              <div class="card-unit">${p.priceUnitOrKg || ''}</div>
+            </div>
+          `;
+
+          grid.appendChild(card);
+        });
+      }
+
+      function escHtml(str) {
+        return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      }
+
+      function renderStarsMini(avg) {
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+          html += `<span class="star ${i <= Math.round(avg) ? 'filled' : ''}">★</span>`;
+        }
+        return html;
+      }
+
+      function setFavState(btn, isFav) {
+        btn.classList.toggle('favorited', isFav);
+      }
+
+      async function markFavoritos(products) {
+        if (!isAuth) return;
+        const items = products.map(p => ({
+          market: p.market,
+          name: p.name,
+          price: parseFloat(String(p.price)).toFixed(4)
+        }));
+        const res = await fetch('/Favorito/CheckFavoritos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': getToken()
+          },
+          body: JSON.stringify(items)
+        });
+        const data = await res.json();
+        const favSet = new Set(
+          data.filter(d => d.isFavorito).map(d => `${d.market}|${d.name}|${d.price}`)
+        );
+        document.querySelectorAll('.btn-fav[data-market]').forEach(btn => {
+          const key = `${btn.dataset.market}|${btn.dataset.name}|${btn.dataset.price}`;
+          setFavState(btn, favSet.has(key));
+        });
+      }
+
+      async function toggleCart(btn, market, name, price, image, priceUnitOrKg) {
+        if (!isAuth) { window.location.href = '/Account/Login'; return; }
+        const res = await fetch('/Cart/Toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getToken() },
+          body: `market=${encodeURIComponent(market)}&name=${encodeURIComponent(name)}&price=${parseFloat(String(price).replace(',', '.')).toFixed(4)}&image=${encodeURIComponent(image)}&priceUnitOrKg=${encodeURIComponent(priceUnitOrKg)}`
+        });
+        const data = await res.json();
+        btn.textContent = data.inCart ? '✅' : '🛒';
+      }
+
+      async function markCart(products) {
+        if (!isAuth) return;
+        const items = products.map(p => ({
+          market: p.market,
+          name: p.name,
+          price: parseFloat(String(p.price)).toFixed(4)
+        }));
+        const res = await fetch('/Cart/CheckCart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
+          body: JSON.stringify(items)
+        });
+        const data = await res.json();
+        const cartSet = new Set(data.filter(d => d.inCart).map(d => `${d.market}|${d.name}|${d.price}`));
+        document.querySelectorAll('.btn-fav[data-market-cart]').forEach(btn => {
+          const key = `${btn.dataset.marketCart}|${btn.dataset.nameCart}|${btn.dataset.priceCart}`;
+          if (cartSet.has(key)) btn.textContent = '✅';
+        });
+      }
+
+      async function toggleFav(btn, market, name, price, image, priceUnitOrKg) {
+        if (!isAuth) { window.location.href = '/Account/Login'; return; }
+        const res = await fetch('/Favorito/Toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getToken() },
+          body: `market=${encodeURIComponent(market)}&name=${encodeURIComponent(name)}&price=${parseFloat(String(price).replace(',', '.')).toFixed(4)}&image=${encodeURIComponent(image)}&priceUnitOrKg=${encodeURIComponent(priceUnitOrKg)}`
+        });
+        const data = await res.json();
+        setFavState(btn, data.isFavorito);
+      }
+
+      function getToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+      }
+
+      let modalProduct = null;
+      let selectedStars = 0;
+
+      async function openModal(btn) {
+        const card = btn.closest('.card');
+        const market = card.dataset.market;
+        const name = card.dataset.name;
+        const image = card.dataset.image;
+        modalProduct = { market, name, image };
+        selectedStars = 0;
+        document.getElementById('modalProductRef').textContent = `${market} · ${name}`;
+        document.getElementById('modalComment').value = '';
+        updateModalStars(0);
+        document.getElementById('modalOverlay').classList.add('open');
+
+        const res = await fetch(`/Review/GetProductReviews?market=${encodeURIComponent(market)}&productName=${encodeURIComponent(name)}`);
+        const data = await res.json();
+
+        const avgEl = document.getElementById('modalAvg');
+        if (data.avgRating > 0) {
+          avgEl.innerHTML = `<span class="big">${data.avgRating.toFixed(1)}</span> <span>${renderStarsMini(data.avgRating)}</span> <span>(${data.reviews.length} reseña${data.reviews.length !== 1 ? 's' : ''})</span>`;
+        } else {
+          avgEl.innerHTML = `<span style="color:var(--text-muted)">Sin reseñas aún</span>`;
+        }
+
+        const list = document.getElementById('reviewsList');
+        list.innerHTML = data.reviews.map(r => `
+          <div class="review-item">
+            <div class="r-stars">${'★'.repeat(r.estrellas)}${'☆'.repeat(5 - r.estrellas)}</div>
+            ${r.comentario ? `<div class="r-comment">${r.comentario}</div>` : ''}
+            <div class="r-user">${r.userEmail} · ${new Date(r.creadaEn).toLocaleDateString('es-ES')}</div>
+          </div>
+        `).join('');
+
+        if (data.myReview) {
+          selectedStars = data.myReview.estrellas;
+          updateModalStars(selectedStars);
+          document.getElementById('modalComment').value = data.myReview.comentario ?? '';
+        }
+      }
+
+      function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('open');
+      }
+
+      function updateModalStars(val) {
+        document.querySelectorAll('.modal-star').forEach(s => {
+          s.classList.toggle('filled', parseInt(s.dataset.val) <= val);
+        });
+      }
+
+      document.querySelectorAll('.modal-star').forEach(s => {
+        s.addEventListener('click', () => {
+          selectedStars = parseInt(s.dataset.val);
+          updateModalStars(selectedStars);
+        });
+        s.addEventListener('mouseover', () => updateModalStars(parseInt(s.dataset.val)));
+        s.addEventListener('mouseout', () => updateModalStars(selectedStars));
+      });
+
+      async function submitReview() {
+        if (!isAuth) { window.location.href = '/Account/Login'; return; }
+        if (selectedStars === 0) { alert('Selecciona una puntuación'); return; }
+        const comentario = document.getElementById('modalComment').value;
+        await fetch('/Review/Create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getToken() },
+          body: `market=${encodeURIComponent(modalProduct.market)}&productName=${encodeURIComponent(modalProduct.name)}&productImage=${encodeURIComponent(modalProduct.image)}&estrellas=${selectedStars}&comentario=${encodeURIComponent(comentario)}`
+        });
+        closeModal();
+      }
+
+      async function loadRatingsAndSort(products) {
+        const payload = products.map(p => ({ market: p.market, name: p.name }));
+        const res = await fetch('/Review/GetRatings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const ratings = await res.json();
+        products.forEach(p => {
+          p._avgRating = ratings[`${p.market}|${p.name}`] || 0;
+        });
+        return products.sort((a, b) => b._avgRating - a._avgRating);
+      }
+
+      function removeAccents(str) {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+
+      function showState(type) {
+        const wrap = document.getElementById('stateWrap');
+        document.getElementById('bestByMarketWrap').style.display = 'none';
+        document.getElementById('sortWrap').style.display = 'none';
+        document.getElementById('grid').innerHTML = '';
+
+        if (type === 'loading') {
+          wrap.style.display = 'block';
+          wrap.innerHTML = `<div class="spinner"></div><h3>Buscando productos...</h3><p>Consultando supermercados en tiempo real</p>`;
+        } else if (type === 'empty') {
+          wrap.style.display = 'block';
+          wrap.innerHTML = `<div class="icon">😔</div><h3>Sin resultados</h3><p>No se encontraron productos que coincidan con tu búsqueda.</p>`;
+        } else {
+          wrap.style.display = 'none';
+        }
+      }
+
+      function hideState() {
+        document.getElementById('stateWrap').style.display = 'none';
+      }
+
+      function showError(msg) {
+        const el = document.getElementById('errorBanner');
+        el.textContent = msg;
+        el.style.display = 'block';
+      }
+
+      function hideError() {
+        document.getElementById('errorBanner').style.display = 'none';
+      }
+
+      async function renderBestByMarket(products) {
+        const term = document.getElementById('searchInput').value.trim();
+        const grid = document.getElementById('bestByMarketGrid');
+
+        if (products.length === 0) {
+          document.getElementById('bestByMarketWrap').style.display = 'none';
+          return;
+        }
+
+        const markets = [...new Set(products.map(p => p.market))];
+
+        if (term === lastBestByMarketTerm && lastBestByMarketAll.length > 0) {
+          const cached = lastBestByMarketAll.filter(p => markets.includes(p.market));
+          if (cached.length > 0) {
+            lastBestByMarketResult = cached;
+            paintBestByMarket(cached);
+            return;
+          }
+        }
+
+        if (markets.length === 1) {
+          const cheapest = [...products].sort((a, b) => {
+            const ua = a.unitPrice ?? Infinity;
+            const ub = b.unitPrice ?? Infinity;
+            return ua !== ub ? ua - ub : a.price - b.price;
+          })[0];
+          lastBestByMarketResult = [cheapest];
+          paintBestByMarket([cheapest]);
+          return;
+        }
+
+        lastBestByMarketResult = [];
+        grid.innerHTML = `<div style="color:var(--text-muted);font-size:0.82rem;padding:0.5rem">
+          <div class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></div>
+          Analizando mejores opciones...
+        </div>`;
+
+        const slim = products.slice(0, 50).map(p => ({
+          market: p.market, name: p.name, price: p.price,
+          priceUnitOrKg: p.priceUnitOrKg, unitPrice: p.unitPrice,
+          brand: p.brand, image: p.image, productPrice: p.productPrice
+        }));
+
+        try {
+          const res = await fetch('/find/bestbymarket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ term, products: slim })
+          });
+
+          if (!res.ok) {
+            grid.innerHTML = `<span style="color:var(--orange);font-size:0.82rem">Error ${res.status}. Inténtalo de nuevo.</span>`;
+            return;
+          }
+
+          const best = await res.json();
+          if (!best || best.length === 0) {
+            grid.innerHTML = `<span style="color:var(--text-muted);font-size:0.82rem">No se encontraron mejores opciones.</span>`;
+            return;
+          }
+
+          lastBestByMarketTerm = term;
+          lastBestByMarketAll  = best;
+          lastBestByMarketResult = best;
+          paintBestByMarket(best);
+
+        } catch (err) {
+          console.error('BestByMarket error:', err);
+          grid.innerHTML = `<span style="color:var(--orange);font-size:0.82rem">Error: ${err.message}</span>`;
+        }
+      }
+
+      function paintBestByMarket(best) {
+        const grid = document.getElementById('bestByMarketGrid');
+
+        const sorted = [...best].sort((a, b) => {
+          const ua = a.unitPrice ?? Infinity;
+          const ub = b.unitPrice ?? Infinity;
+          if (ua === Infinity && ub === Infinity) return a.price - b.price;
+          return ua - ub;
+        });
+
+        const someHaveUnitPrice = sorted.some(p => p.unitPrice != null);
+        const cheapestUnitPrice = someHaveUnitPrice
+          ? sorted.find(p => p.unitPrice != null)?.unitPrice
+          : null;
+
+        grid.innerHTML = sorted.map((p) => {
+          const isCheapest = someHaveUnitPrice
+            ? p.unitPrice != null && p.unitPrice === cheapestUnitPrice
+            : p.price === sorted[0].price;
+
+          return `
+            <div style="
+              background: var(--bg2);
+              border: 1.5px solid ${isCheapest ? 'var(--yellow)' : 'var(--border)'};
+              border-radius: 12px;
+              overflow: hidden;
+              display: flex;
+              flex-direction: column;
+              min-width: 150px;
+              max-width: 180px;
+              position: relative;
+            ">
+              ${isCheapest ? '<span style="position:absolute;top:6px;left:6px;background:var(--yellow);color:#000;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;z-index:1;letter-spacing:0.5px;">MÁS BARATO</span>' : ''}
+              ${p.image
+                ? `<img src="${p.image}" alt="${p.name}" style="width:100%;aspect-ratio:1;object-fit:contain;background:#fff;padding:0.5rem;" onerror="this.style.display='none'">`
+                : `<div style="width:100%;aspect-ratio:1;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:2rem;">🛒</div>`
+              }
+              <div style="padding:0.7rem;display:flex;flex-direction:column;gap:0.25rem;">
+                <span class="card-market market-${p.market}" style="font-size:0.65rem;">${p.market}</span>
+                <span style="font-size:0.78rem;color:var(--text);line-height:1.3;">${p.name.length > 35 ? p.name.slice(0,35)+'…' : p.name}</span>
+                <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--orange);font-size:1rem;">${p.productPrice ?? (p.price?.toFixed(2) + ' €')}</span>
+                ${p.priceUnitOrKg ? `<span style="font-size:0.65rem;color:var(--text-muted);">${p.priceUnitOrKg}</span>` : '<span style="font-size:0.65rem;color:var(--text-muted);font-style:italic;">sin precio/L</span>'}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function toggleBestByMarket() {
+        const panel = document.getElementById('bestByMarket');
+        const chevron = document.getElementById('bestChevron');
+        const isOpen = panel.style.display !== 'none';
+        if (isOpen) {
+          panel.style.display = 'none';
+          chevron.textContent = '▼';
+        } else {
+          panel.style.display = 'block';
+          chevron.textContent = '▲';
+          if (lastBestByMarketResult.length > 0) {
+            paintBestByMarket(lastBestByMarketResult);
+          }
+        }
+      }
+
+      let panelStars = 0;
+      let panelProduct = null;
+
+      async function openProductPanel(market, name, image) {
+        panelProduct = { market, name, image };
+        panelStars = 0;
+        document.getElementById('panelTitle').textContent = name;
+        document.getElementById('panelBody').innerHTML = '<div class="panel-spinner"></div>';
+        document.getElementById('productPanel').classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        const res = await fetch(`/Review/GetProductReviews?market=${encodeURIComponent(market)}&productName=${encodeURIComponent(name)}`);
+        const data = await res.json();
+        renderPanelContent(data, market, name, image);
+      }
+
+      function closeProductPanel() {
+        document.getElementById('productPanel').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProductPanel(); });
+
+      function renderPanelContent(data, market, name, image) {
+        const avg = data.avgRating || 0;
+        const reviews = data.reviews || [];
+        const myReview = data.myReview;
+        if (myReview) { panelStars = myReview.estrellas; }
+
+        const dist = [0,0,0,0,0];
+        reviews.forEach(r => { if (r.estrellas >= 1 && r.estrellas <= 5) dist[r.estrellas-1]++; });
+        const total = reviews.length;
+
+        let avgStarsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+          avgStarsHtml += avg >= i
+            ? '<span class="pstar filled">★</span>'
+            : (avg >= i - 0.5 ? '<span class="pstar" style="color:#FFD166;opacity:0.5">★</span>' : '<span class="pstar">★</span>');
+        }
+
+        let distHtml = '';
+        for (let s = 5; s >= 1; s--) {
+          const cnt = dist[s-1];
+          const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+          distHtml += `<div class="panel-dist-row">
+            <span style="min-width:12px">${s}</span>
+            <span style="color:#FFD166;font-size:0.72rem">★</span>
+            <div class="panel-bar-wrap"><div class="panel-bar-fill" style="width:${pct}%"></div></div>
+            <span style="min-width:16px;text-align:right">${cnt}</span>
+          </div>`;
+        }
+
+        const formHtml = isAuth
+          ? `<div>
+              <div class="panel-form-title">✏️ Tu valoración</div>
+              <div class="panel-star-picker" id="panelStarPicker">
+                ${[1,2,3,4,5].map(v => `<span class="panel-star${panelStars >= v ? ' filled' : ''}" data-val="${v}">★</span>`).join('')}
+              </div>
+              <textarea class="panel-textarea" id="panelComment" placeholder="Escribe tu comentario (opcional)...">${myReview?.comentario ?? ''}</textarea>
+              <div class="panel-success" id="panelSuccess">✅ ¡Reseña guardada!</div>
+              <button class="panel-btn-submit" id="panelBtnSubmit" onclick="submitPanelReview()" ${panelStars === 0 ? 'disabled' : ''}>Guardar reseña</button>
+            </div>`
+          : `<div class="panel-auth-prompt">
+              <a href="/Account/Login">Inicia sesión</a> para dejar tu valoración.
+            </div>`;
+
+        const reviewsHtml = total === 0
+          ? '<div class="panel-no-reviews">Sin reseñas aún · ¡sé el primero!</div>'
+          : reviews.map(r => `
+              <div class="panel-review">
+                <div class="panel-review-header">
+                  <div class="panel-avatar">${(r.userEmail?.[0] ?? '?').toUpperCase()}</div>
+                  <div style="flex:1">
+                    <div class="panel-reviewer-email">${r.userEmail}</div>
+                    <div class="panel-reviewer-date">${new Date(r.creadaEn).toLocaleDateString('es-ES')}</div>
+                  </div>
+                  <div class="panel-review-stars">
+                    ${[1,2,3,4,5].map(s => `<span class="prstar${s <= r.estrellas ? ' filled' : ''}">★</span>`).join('')}
+                  </div>
+                </div>
+                ${r.comentario ? `<div class="panel-review-comment">${r.comentario}</div>` : ''}
+              </div>`).join('');
+
+        document.getElementById('panelBody').innerHTML = `
+          <div class="panel-product-top">
+            <div class="panel-img-wrap">
+              ${image ? `<img src="${image}" alt="${name}" onerror="this.parentElement.innerHTML='🛒'">` : '🛒'}
+            </div>
+            <div class="panel-product-info">
+              <div class="panel-market">${market}</div>
+              <div class="panel-name">${name}</div>
+            </div>
+          </div>
+
+          ${total > 0 ? `
+          <div class="panel-avg">
+            <div class="panel-avg-big">${avg.toFixed(1)}</div>
+            <div class="panel-avg-right">
+              <div class="panel-stars">${avgStarsHtml}</div>
+              <div class="panel-count">${total} reseña${total !== 1 ? 's' : ''}</div>
+            </div>
+          </div>
+          <div class="panel-dist">${distHtml}</div>
+          ` : '<div style="color:var(--text-muted);font-size:0.85rem;font-style:italic">Sin valoraciones aún</div>'}
+
+          ${formHtml}
+
+          <div style="font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;">
+            💬 Reseñas <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:0.1rem 0.45rem;font-size:0.7rem;color:var(--text-muted);font-weight:400;font-family:'DM Sans',sans-serif;">${total}</span>
+          </div>
+          <div>${reviewsHtml}</div>
+        `;
+
+        document.querySelectorAll('.panel-star').forEach(s => {
+          s.addEventListener('click', () => {
+            panelStars = parseInt(s.dataset.val);
+            updatePanelStars(panelStars);
+          });
+          s.addEventListener('mouseover', () => updatePanelStars(parseInt(s.dataset.val)));
+          s.addEventListener('mouseout',  () => updatePanelStars(panelStars));
+        });
+      }
+
+      function updatePanelStars(val) {
+        document.querySelectorAll('.panel-star').forEach(s =>
+          s.classList.toggle('filled', parseInt(s.dataset.val) <= val));
+        const btn = document.getElementById('panelBtnSubmit');
+        if (btn) btn.disabled = val === 0;
+      }
+
+      async function submitPanelReview() {
+        if (!isAuth || panelStars === 0 || !panelProduct) return;
+        const comentario = document.getElementById('panelComment').value;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        const res = await fetch('/Review/Create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+          body: `market=${encodeURIComponent(panelProduct.market)}&productName=${encodeURIComponent(panelProduct.name)}&productImage=${encodeURIComponent(panelProduct.image)}&estrellas=${panelStars}&comentario=${encodeURIComponent(comentario)}`
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('panelSuccess').style.display = 'block';
+          setTimeout(() => openProductPanel(panelProduct.market, panelProduct.name, panelProduct.image), 1200);
+        }
+      }
+  </script>
+</body>
+@Html.AntiForgeryToken()
+</html>
