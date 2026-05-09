@@ -1,5 +1,6 @@
 @model List<SuperCartMVC.Models.CartItem>
 @{ Layout = null; }
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 <!DOCTYPE html>
 <html lang="es">
@@ -81,7 +82,60 @@
       transition: all 0.15s; width: 100%;
     }
     .btn-clear:hover { border-color: #e24b4a; color: #e24b4a; }
+
+    /* Google Maps InfoWindow — override fondo blanco */
+    .gm-style .gm-style-iw-c {
+      background: #1A1A1C !important;
+      border-radius: 10px !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important;
+      padding: 0 !important;
+    }
+    .gm-style .gm-style-iw-d { overflow: hidden !important; }
+    .gm-style .gm-style-iw-tc::after, .gm-style .gm-style-iw-t::after { background: #1A1A1C !important; }
+    .gm-style .gm-ui-hover-effect { display: none !important; }
+
+    /* ROUTE MODAL */
+    #cartRouteModal {
+      display: none; position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 1rem;
+    }
+    #cartRouteModal.open { display: flex; }
+    .route-modal-box {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+      width: 100%; max-width: 860px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .route-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .route-modal-header h2 { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; color:var(--orange); margin:0; }
+    #cartRouteMap { width:100%; height:400px; flex-shrink:0; }
+    #cartRouteStatus { padding:1rem 1.25rem; font-size:0.83rem; color:var(--text-dim); text-align:center; }
+    #cartRouteInfo { padding:0.75rem 1.25rem; overflow-y:auto; max-height:220px; flex-shrink:0; }
+    .route-step {
+      display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0;
+      border-bottom:1px solid var(--border); font-size:0.82rem; color:var(--text);
+    }
+    .route-step:last-child { border-bottom:none; }
+    .route-step-num {
+      background:var(--orange); color:#fff; width:24px; height:24px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; flex-shrink:0;
+    }
+    .cart-route-summary {
+      display:flex; gap:1rem; padding:0.75rem 1.25rem; background:var(--bg3);
+      border-top:1px solid var(--border); font-size:0.82rem; flex-shrink:0; flex-wrap:wrap;
+    }
+    .cart-route-summary span { color:var(--text-dim); }
+    .cart-route-summary strong { color:var(--orange); margin-left:4px; }
+    .btn-route {
+      background: var(--bg2); border: 1.5px solid var(--teal); border-radius: 10px;
+      padding: 0.6rem 1rem; color: var(--teal); font-family:'DM Sans',sans-serif;
+      font-size: 0.85rem; cursor: pointer; transition: all 0.15s; width: 100%;
+      margin-top: 0.5rem; display:flex; align-items:center; justify-content:center; gap:0.5rem;
+    }
+    .btn-route:hover { background: rgba(46,196,182,0.1); }
   </style>
+  <script src="https://maps.googleapis.com/maps/api/js?key=@(Configuration["GoogleMaps:ApiKey"])&libraries=places&callback=initCartMaps" async defer></script>
 </head>
 <body>
   <header>
@@ -158,11 +212,261 @@
           @Html.AntiForgeryToken()
           <button type="submit" class="btn-clear" onclick="return confirm('¿Vaciar toda la lista?')">🗑 Vaciar lista</button>
         </form>
+        @if (Model.Any())
+        {
+          <button class="btn-route" onclick="openCartRouteModal()">
+            🗺️ Ver ruta óptima de compra
+          </button>
+        }
       </div>
     }
   </div>
 
+  <!-- MODAL RUTA CARRITO -->
+  <div id="cartRouteModal">
+    <div class="route-modal-box">
+      <div class="route-modal-header">
+        <h2>🗺️ Ruta óptima — Tu lista de la compra</h2>
+        <button onclick="closeCartRouteModal()" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;">✕</button>
+      </div>
+      <div id="cartRouteMap"></div>
+      <div id="cartRouteStatus">Obteniendo tu ubicación...</div>
+      <div id="cartRouteInfo"></div>
+      <div class="cart-route-summary" id="cartRouteSummary" style="display:none;">
+        <div><span>Distancia total:</span><strong id="cartRouteDist">—</strong></div>
+        <div><span>Tiempo estimado:</span><strong id="cartRouteTime">—</strong></div>
+        <div><span>Paradas:</span><strong id="cartRouteStops">—</strong></div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Markets del carrito (desde servidor)
+    const cartMarkets = @Html.Raw(
+      System.Text.Json.JsonSerializer.Serialize(
+        Model.Select(c => c.Market).Distinct().ToList()
+      )
+    );
+
+    const darkMapStyle = [
+      { elementType:'geometry', stylers:[{color:'#1a1a1c'}] },
+      { elementType:'labels.text.fill', stylers:[{color:'#888884'}] },
+      { elementType:'labels.text.stroke', stylers:[{color:'#0e0e0f'}] },
+      { featureType:'road', elementType:'geometry', stylers:[{color:'#2e2e33'}] },
+      { featureType:'road.highway', elementType:'geometry', stylers:[{color:'#3a3a40'}] },
+      { featureType:'water', elementType:'geometry', stylers:[{color:'#0e0e0f'}] },
+      { featureType:'poi', stylers:[{visibility:'off'}] },
+      { featureType:'transit', stylers:[{visibility:'off'}] },
+    ];
+
+    let cMap = null, cDirSvc = null, cDirRend = null, cGeocoder = null;
+    let cUserLatLng = null, cCustomMarkers = [];
+
+    function initCartMaps() {}
+
+    function openCartRouteModal() {
+      document.getElementById('cartRouteModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('cartRouteStatus').style.display = 'block';
+      document.getElementById('cartRouteStatus').textContent = 'Obteniendo tu ubicación...';
+      document.getElementById('cartRouteInfo').innerHTML = '';
+      document.getElementById('cartRouteSummary').style.display = 'none';
+
+      if (!navigator.geolocation) {
+        document.getElementById('cartRouteStatus').textContent = 'Tu navegador no soporta geolocalización.';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(onCartGotPosition, () => {
+        document.getElementById('cartRouteStatus').textContent = 'No se pudo obtener la ubicación.';
+      }, { timeout: 10000 });
+    }
+
+    function closeCartRouteModal() {
+      document.getElementById('cartRouteModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCartRouteModal(); });
+
+    function clearCartMarkers() {
+      cCustomMarkers.forEach(m => m.setMap(null));
+      cCustomMarkers = [];
+    }
+
+    async function onCartGotPosition(pos) {
+      cUserLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+      if (!cMap) {
+        cMap = new google.maps.Map(document.getElementById('cartRouteMap'), {
+          center: cUserLatLng, zoom: 13, styles: darkMapStyle, zoomControl: true,
+        });
+        cDirSvc = new google.maps.DirectionsService();
+        cDirRend = new google.maps.DirectionsRenderer({
+          suppressMarkers: true,
+          polylineOptions: { strokeColor: '#FF6B35', strokeWeight: 5, strokeOpacity: 0.9 }
+        });
+        cDirRend.setMap(cMap);
+        cGeocoder = new google.maps.Geocoder();
+      } else {
+        cMap.setCenter(cUserLatLng);
+        clearCartMarkers();
+        cDirRend.set('directions', null);
+      }
+
+      // Marcador usuario
+      const um = new google.maps.Marker({
+        position: cUserLatLng, map: cMap, title: 'Tu ubicación', zIndex: 100,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 12, fillColor: '#2EC4B6', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 },
+        label: { text: '⌂', color: '#ffffff', fontSize: '13px', fontWeight: 'bold' }
+      });
+      cCustomMarkers.push(um);
+
+      document.getElementById('cartRouteStatus').textContent = `Buscando ${cartMarkets.join(', ')}...`;
+
+      // Geocodificar ciudad una vez
+      const city = await new Promise(resolve => {
+        cGeocoder.geocode({ location: cUserLatLng }, (res, st) => {
+          if (st === 'OK' && res.length > 0) {
+            const comp = res[0].address_components.find(c => c.types.includes('locality'));
+            resolve(comp ? comp.long_name : '');
+          } else resolve('');
+        });
+      });
+
+      // Geocodificar cada supermercado
+      const waypoints = [];
+      for (const market of cartMarkets) {
+        const wp = await findMarket(market, city);
+        if (wp) waypoints.push(wp);
+      }
+
+      if (waypoints.length === 0) {
+        document.getElementById('cartRouteStatus').textContent = 'No se encontraron supermercados cercanos.';
+        return;
+      }
+
+      document.getElementById('cartRouteStatus').textContent = 'Calculando ruta óptima...';
+      buildCartOptimalRoute(waypoints);
+    }
+
+    async function findMarket(marketName, city) {
+      try {
+        const center = cMap.getCenter();
+        const { Place } = await google.maps.importLibrary('places');
+        const { places } = await Place.searchByText({
+          textQuery: `${marketName} supermercado`,
+          fields: ['displayName', 'location', 'formattedAddress'],
+          locationBias: { center, radius: 8000 },
+          maxResultCount: 1,
+        });
+        if (places && places.length > 0) {
+          return { name: marketName, latLng: places[0].location, address: places[0].formattedAddress };
+        }
+      } catch(e) {}
+
+      return new Promise(resolve => {
+        const query = city ? `${marketName} ${city}` : marketName;
+        cGeocoder.geocode({ address: query }, (res, st) => {
+          if (st === 'OK' && res.length > 0) {
+            resolve({ name: marketName, latLng: res[0].geometry.location, address: res[0].formatted_address });
+          } else resolve(null);
+        });
+      });
+    }
+
+    function buildCartOptimalRoute(waypoints) {
+      cDirSvc.route({
+        origin: cUserLatLng,
+        destination: cUserLatLng,
+        waypoints: waypoints.map(w => ({ location: w.latLng, stopover: true })),
+        optimizeWaypoints: true,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (result, status) => {
+        if (status === 'OK') {
+          cDirRend.setDirections(result);
+          renderCartRoute(result, waypoints);
+        } else {
+          document.getElementById('cartRouteStatus').textContent = `Error: ${status}`;
+        }
+      });
+    }
+
+    let cOpenInfoWindow = null;
+
+    function renderCartRoute(result, waypoints) {
+      const route = result.routes[0];
+      const order = route.waypoint_order;  // orden optimizado de visita
+      const legs = route.legs;
+      const colors = ['#FF6B35','#FFD166','#2EC4B6','#a78bfa','#f472b6','#34d399','#60a5fa','#fb923c'];
+
+      let totalDist = 0, totalTime = 0;
+      legs.forEach(l => { totalDist += l.distance.value; totalTime += l.duration.value; });
+
+      document.getElementById('cartRouteDist').textContent = (totalDist / 1000).toFixed(1) + ' km';
+      document.getElementById('cartRouteTime').textContent = Math.round(totalTime / 60) + ' min';
+      document.getElementById('cartRouteStops').textContent = waypoints.length + ' supermercado' + (waypoints.length !== 1 ? 's' : '');
+      document.getElementById('cartRouteSummary').style.display = 'flex';
+      document.getElementById('cartRouteStatus').style.display = 'none';
+
+      // orderedStops[0] = primera parada, [1] = segunda, etc.
+      const orderedStops = order.map(i => waypoints[i]);
+
+      // Marcadores numerados según orden de visita + InfoWindow al clic
+      orderedStops.forEach((stop, visitIdx) => {
+        const color = colors[visitIdx % colors.length];
+        const marker = new google.maps.Marker({
+          position: stop.latLng, map: cMap, zIndex: 50,
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 16, fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2.5 },
+          label: { text: String(visitIdx + 1), color: '#000', fontSize: '11px', fontWeight: 'bold' }
+        });
+
+        const leg = legs[visitIdx];
+        const iw = new google.maps.InfoWindow({
+          content: `<div style="font-family:'DM Sans',sans-serif;padding:8px 6px;min-width:170px;background:#1A1A1C;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);">
+            <div style="font-size:12px;color:#888884;margin-bottom:2px;">Parada ${visitIdx + 1}</div>
+            <strong style="font-size:14px;color:#F0EEE8;">${stop.name}</strong>
+            <div style="font-size:11px;color:#888884;margin-top:4px;line-height:1.4;">${stop.address || ''}</div>
+            <div style="margin-top:6px;font-size:12px;color:#FF6B35;font-weight:600;">${leg.distance.text} · ${leg.duration.text}</div>
+          </div>`
+        });
+
+        marker.addListener('click', () => {
+          if (cOpenInfoWindow) cOpenInfoWindow.close();
+          iw.open(cMap, marker);
+          cOpenInfoWindow = iw;
+        });
+
+        cCustomMarkers.push(marker);
+      });
+
+      // Lista de paradas con scroll
+      let html = `<div class="route-step">
+        <div class="route-step-num" style="background:var(--teal);">⌂</div>
+        <div><strong>Tu ubicación</strong> <span style="color:var(--text-dim);font-size:0.78rem;">punto de partida</span></div>
+      </div>`;
+
+      orderedStops.forEach((stop, visitIdx) => {
+        const leg = legs[visitIdx];
+        const color = colors[visitIdx % colors.length];
+        html += `<div class="route-step">
+          <div class="route-step-num" style="background:${color};color:#000;">${visitIdx + 1}</div>
+          <div>
+            <strong>${stop.name}</strong>
+            <span style="color:var(--text-dim);margin-left:6px;font-size:0.78rem;">${leg.distance.text} · ${leg.duration.text}</span>
+            ${stop.address ? `<div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px;">${stop.address}</div>` : ''}
+          </div>
+        </div>`;
+      });
+
+      const last = legs[legs.length - 1];
+      html += `<div class="route-step">
+        <div class="route-step-num" style="background:var(--teal);">⌂</div>
+        <div><strong>Volver a casa</strong><span style="color:var(--text-dim);font-size:0.78rem;margin-left:6px;">${last.distance.text} · ${last.duration.text}</span></div>
+      </div>`;
+
+      document.getElementById('cartRouteInfo').innerHTML = html;
+    }
+
     async function changeQty(id, current, delta) {
       const newQty = current + delta;
       if (newQty < 1) return;

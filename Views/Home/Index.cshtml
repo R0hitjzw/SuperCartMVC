@@ -1,6 +1,7 @@
 ﻿@{
   Layout = null; // aixo es temporal fins que tinguem log in i altres pagines, ara mateix nomes tenim aquesta
 }
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 <!DOCTYPE html>
 <html lang="es">
@@ -634,7 +635,210 @@
       .panel-review-comment { font-size: 0.83rem; color: var(--text-dim); line-height: 1.5; padding-left: 0.5rem; border-left: 2px solid var(--border); }
       .panel-no-reviews { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1.5rem 0; }
       .panel-spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 2rem auto; }
+
+      /* LAYOUT SIDEBAR */
+      .page-layout {
+        display: flex;
+        align-items: flex-start;
+        min-height: calc(100vh - 73px);
+      }
+      .sidebar {
+        width: 230px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        background: var(--bg2);
+        border-right: 1px solid var(--border);
+        padding: 1.25rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar-header {
+        padding: 0 1rem 0.8rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 0.5rem;
+      }
+      .sidebar-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--text-muted);
+      }
+      .sidebar-todos {
+        width: calc(100% - 1.5rem);
+        margin: 0 0.75rem 0.5rem;
+        background: var(--bg3);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        padding: 0.4rem 0.9rem;
+        color: var(--text-dim);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.83rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: center;
+        font-weight: 500;
+      }
+      .sidebar-todos.active {
+        background: var(--orange);
+        border-color: var(--orange);
+        color: #fff;
+      }
+      .sidebar-todos:hover:not(.active) { border-color: var(--orange); color: var(--text); }
+      .sidebar-market-row {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.45rem 0.75rem;
+        margin: 0 0.75rem 0.35rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg3);
+      }
+      .sidebar-market-row:hover { border-color: var(--orange); }
+      .sidebar-market-row.active {
+        border-color: var(--orange);
+        background: rgba(255,107,53,0.1);
+      }
+      .sidebar-market-row.active .market-sidebar-name { color: var(--orange); font-weight: 500; }
+      .market-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        object-fit: contain;
+        background: #fff;
+        padding: 3px;
+        flex-shrink: 0;
+      }
+      .market-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .market-sidebar-info { flex: 1; min-width: 0; }
+      .market-sidebar-name { font-size: 0.83rem; color: var(--text); display: block; line-height: 1.2; transition: color 0.12s; }
+      .market-sidebar-count { font-size: 0.7rem; color: var(--text-muted); }
+      .main-content { flex: 1; min-width: 0; }
+
+      /* Google Maps InfoWindow — override fondo blanco */
+      .gm-style .gm-style-iw-c {
+        background: #1A1A1C !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important;
+        padding: 0 !important;
+      }
+      .gm-style .gm-style-iw-d { overflow: hidden !important; }
+      .gm-style .gm-style-iw-tc::after, .gm-style .gm-style-iw-t::after { background: #1A1A1C !important; }
+      .gm-style .gm-ui-hover-effect { display: none !important; }
+
+      /* ROUTE MODAL */
+      #routeModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9000;
+        background: rgba(0,0,0,0.85);
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      #routeModal.open { display: flex; }
+      .route-modal-box {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 860px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .route-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .route-modal-header h2 {
+        font-family: 'Syne', sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--orange);
+        margin: 0;
+      }
+      #routeMap {
+        width: 100%;
+        height: 420px;
+        flex-shrink: 0;
+      }
+      #routeInfo {
+        padding: 1rem 1.25rem;
+        overflow-y: auto;
+        max-height: 220px;
+        flex-shrink: 0;
+      }
+      #routeInfo .route-step {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.82rem;
+        color: var(--text);
+      }
+      #routeInfo .route-step:last-child { border-bottom: none; }
+      .route-step-num {
+        background: var(--orange);
+        color: #fff;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .route-step-home {
+        background: var(--teal);
+      }
+      #routeStatus {
+        padding: 1rem 1.25rem;
+        font-size: 0.83rem;
+        color: var(--text-dim);
+        text-align: center;
+      }
+      .route-summary {
+        display: flex;
+        gap: 1rem;
+        padding: 0.75rem 1.25rem;
+        background: var(--bg3);
+        border-top: 1px solid var(--border);
+        font-size: 0.82rem;
+        flex-shrink: 0;
+      }
+      .route-summary span { color: var(--text-dim); }
+      .route-summary strong { color: var(--orange); margin-left: 4px; }
   </style>
+  <script src="https://maps.googleapis.com/maps/api/js?key=@(Configuration["GoogleMaps:ApiKey"])&libraries=places&callback=initGoogleMaps" async defer></script>
 </head>
 
 <body>
@@ -684,6 +888,73 @@
     </div>
   </header>
 
+  <div class="page-layout">
+
+  <!-- SIDEBAR SUPERMERCADOS -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Supermercados</span>
+    </div>
+    <button class="sidebar-todos active" id="btnTodos" onclick="selectAllMarkets()">Todos</button>
+    <div class="sidebar-market-row active" data-market="MERCADONA" onclick="toggleMarketSidebar('MERCADONA')">
+      <img src="/logosSupermercats/mercadona.webp" class="market-logo" alt="Mercadona">
+      <div class="market-sidebar-info">
+        <span class="market-sidebar-name">Mercadona</span>
+        <span class="market-sidebar-count" id="count-MERCADONA"></span>
+      </div>
+    </div>
+    <div class="sidebar-market-row active" data-market="CONSUM" onclick="toggleMarketSidebar('CONSUM')">
+      <img src="/logosSupermercats/consum.webp" class="market-logo" alt="Consum">
+      <div class="market-sidebar-info">
+        <span class="market-sidebar-name">Consum</span>
+        <span class="market-sidebar-count" id="count-CONSUM"></span>
+      </div>
+    </div>
+    <div class="sidebar-market-row active" data-market="ALDI" onclick="toggleMarketSidebar('ALDI')">
+      <img src="/logosSupermercats/aldi.webp" class="market-logo" alt="Aldi">
+      <div class="market-sidebar-info">
+        <span class="market-sidebar-name">Aldi</span>
+        <span class="market-sidebar-count" id="count-ALDI"></span>
+      </div>
+    </div>
+    <div class="sidebar-market-row active" data-market="DIA" onclick="toggleMarketSidebar('DIA')">
+      <img src="/logosSupermercats/dia.webp" class="market-logo" alt="DIA">
+      <div class="market-sidebar-info">
+        <span class="market-sidebar-name">DIA</span>
+        <span class="market-sidebar-count" id="count-DIA"></span>
+      </div>
+    </div>
+    <div class="sidebar-market-row active" data-market="ALCAMPO" onclick="toggleMarketSidebar('ALCAMPO')">
+      <img src="/logosSupermercats/alcampo.webp" class="market-logo" alt="Alcampo">
+      <div class="market-sidebar-info">
+        <span class="market-sidebar-name">Alcampo</span>
+        <span class="market-sidebar-count" id="count-ALCAMPO"></span>
+      </div>
+    </div>
+    <div class="sidebar-market-row active" data-market="AMETLLER" onclick="toggleMarketSidebar('AMETLLER')">
+      <img src="/logosSupermercats/ametller.webp" class="market-logo" alt="Ametller">
+      <div class="market-sidebar-info">
+        <span class="market-sidebar-name">Ametller</span>
+        <span class="market-sidebar-count" id="count-AMETLLER"></span>
+      </div>
+    </div>
+    <div class="sidebar-market-row active" data-market="BONPREU" onclick="toggleMarketSidebar('BONPREU')">
+      <img src="/logosSupermercats/bonpreu.webp" class="market-logo" alt="Bonpreu">
+      <div class="market-sidebar-info">
+        <span class="market-sidebar-name">Bonpreu</span>
+        <span class="market-sidebar-count" id="count-BONPREU"></span>
+      </div>
+    </div>
+    <div class="sidebar-market-row active" data-market="CONDIS" onclick="toggleMarketSidebar('CONDIS')">
+      <img src="/logosSupermercats/condis-.webp" class="market-logo" alt="Condis">
+      <div class="market-sidebar-info">
+        <span class="market-sidebar-name">Condis</span>
+        <span class="market-sidebar-count" id="count-CONDIS"></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
   <div class="hero">
     <h1>Compara precios en<br><em>todos los supermercados</em></h1>
     <p>Busca cualquier producto y compara precios al instante entre Mercadona, Consum, Aldi y más.</p>
@@ -693,19 +964,6 @@
         <input type="text" id="searchInput" placeholder="Busca un producto... ej: leche entera" autocomplete="off" />
         <button class="btn-search" onclick="search()">Buscar</button>
       </div>
-    </div>
-
-    <div class="filters-wrap">
-      <span class="filter-label">Mercado</span>
-      <button class="filter-btn active" id="btnTodos" data-market="all" onclick="toggleMarket(this)">Todos</button>
-      <button class="filter-btn" data-market="MERCADONA" onclick="toggleMarket(this)">Mercadona</button>
-      <button class="filter-btn" data-market="CONSUM" onclick="toggleMarket(this)">Consum</button>
-      <button class="filter-btn" data-market="ALDI" onclick="toggleMarket(this)">Aldi</button>
-      <button class="filter-btn" data-market="DIA" onclick="toggleMarket(this)">DIA</button>
-      <button class="filter-btn" data-market="ALCAMPO" onclick="toggleMarket(this)">Alcampo</button>
-      <button class="filter-btn" data-market="AMETLLER" onclick="toggleMarket(this)">Ametller</button>
-      <button class="filter-btn" data-market="BONPREU" onclick="toggleMarket(this)">Bonpreu</button>
-      <button class="filter-btn" data-market="CONDIS" onclick="toggleMarket(this)">Condis</button>
     </div>
   </div>
 
@@ -719,7 +977,7 @@
       <button class="sort-btn" data-sort="price-asc" onclick="setSort(this)">Precio ↑</button>
       <button class="sort-btn" data-sort="price-desc" onclick="setSort(this)">Precio ↓</button>
       <button class="sort-btn" data-sort="unitprice-asc" onclick="setSort(this)">Precio/kg ↑</button>
-      <button class="sort-btn" data-sort="market" onclick="setSort(this)">Mercado</button>
+      <button class="sort-btn" data-sort="market" onclick="setSort(this)">Supermercado</button>
       <button class="sort-btn" data-sort="rating" onclick="setSort(this)">⭐ Mejor valorado</button>
     </div>
   </div>
@@ -737,11 +995,11 @@
       <div class="product-ref" id="modalProductRef"></div>
       <div class="avg-rating" id="modalAvg"></div>
       <div class="modal-stars" id="modalStars">
-        <span class="modal-star" data-val="1">⭐</span>
-        <span class="modal-star" data-val="2">⭐</span>
-        <span class="modal-star" data-val="3">⭐</span>
-        <span class="modal-star" data-val="4">⭐</span>
-        <span class="modal-star" data-val="5">⭐</span>
+        <span class="modal-star" data-val="1">★</span>
+        <span class="modal-star" data-val="2">★</span>
+        <span class="modal-star" data-val="3">★</span>
+        <span class="modal-star" data-val="4">★</span>
+        <span class="modal-star" data-val="5">★</span>
       </div>
       <textarea id="modalComment" placeholder="Escribe tu comentario (opcional)..."></textarea>
       <div class="reviews-list" id="reviewsList"></div>
@@ -753,24 +1011,60 @@
   </div>
 
   <div id="bestByMarketWrap" style="display:none; max-width:980px; margin: 0 auto 0.5rem; padding: 0 1rem;">
-    <button onclick="toggleBestByMarket()" id="bestByMarketBtn" style="
-      background: var(--bg2);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 0.5rem 1.1rem;
-      color: var(--yellow);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    ">
-      🏆 Mejor opción por supermercado <span id="bestChevron">▼</span>
-    </button>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+      <button onclick="toggleBestByMarket()" id="bestByMarketBtn" style="
+        background: var(--bg2);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        padding: 0.5rem 1.1rem;
+        color: var(--yellow);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      ">
+        🏆 Mejor opción por supermercado <span id="bestChevron">▼</span>
+      </button>
+      <button onclick="openRouteModal()" id="routeBtn" style="
+        background: var(--bg2);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        padding: 0.5rem 1.1rem;
+        color: var(--teal);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      ">
+        🗺️ Ver ruta óptima
+      </button>
+    </div>
     <div id="bestByMarket" style="display:none; margin-top:0.8rem;">
       <div id="bestByMarketGrid" style="display:flex; gap:0.6rem; flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <!-- ROUTE MODAL -->
+  <div id="routeModal">
+    <div class="route-modal-box">
+      <div class="route-modal-header">
+        <h2>🗺️ Ruta óptima de compra</h2>
+        <button onclick="closeRouteModal()" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;line-height:1;">✕</button>
+      </div>
+      <div id="routeMap"></div>
+      <div id="routeStatus">Obteniendo tu ubicación...</div>
+      <div id="routeInfo" style="display:none;"></div>
+      <div class="route-summary" id="routeSummary" style="display:none;">
+        <div><span>Distancia total:</span><strong id="routeTotalDist">—</strong></div>
+        <div><span>Tiempo estimado:</span><strong id="routeTotalTime">—</strong></div>
+        <div><span>Paradas:</span><strong id="routeTotalStops">—</strong></div>
+      </div>
     </div>
   </div>
 
@@ -789,6 +1083,8 @@
   </div>
 
   <div id="grid" class="grid"></div>
+  </div><!-- /main-content -->
+  </div><!-- /page-layout -->
 
   <script>
       const API = '';
@@ -828,50 +1124,81 @@
         }
       });
 
-      function toggleMarket(btn) {
-        const market = btn.dataset.market;
-        const btnTodos = document.getElementById('btnTodos');
+      const ALL_MARKETS = ['MERCADONA','CONSUM','ALDI','DIA','ALCAMPO','AMETLLER','BONPREU','CONDIS'];
 
-        if (market === 'all') {
-          if (selectedMarkets.has('all')) {
-            selectedMarkets = new Set();
-            btnTodos.classList.remove('active');
-            btnTodos.classList.add('none-selected');
-            document.querySelectorAll('.filter-btn[data-market]:not([data-market="all"])').forEach(b => b.classList.remove('active'));
-          } else {
-            selectedMarkets = new Set(['all']);
-            btnTodos.classList.add('active');
-            btnTodos.classList.remove('none-selected');
-            document.querySelectorAll('.filter-btn[data-market]:not([data-market="all"])').forEach(b => b.classList.remove('active'));
-          }
+      function toggleMarketSidebar(market) {
+        const isActive = selectedMarkets.has(market) || selectedMarkets.has('all');
+
+        if (selectedMarkets.has('all')) {
+          // Venimos de "Todos" → activar solo el clickado
+          selectedMarkets = new Set(ALL_MARKETS);
+          selectedMarkets.delete(market);
         } else {
-          if (selectedMarkets.has(market)) {
+          if (isActive) {
             selectedMarkets.delete(market);
-            btn.classList.remove('active');
           } else {
             selectedMarkets.add(market);
-            btn.classList.add('active');
-          }
-          selectedMarkets.delete('all');
-          btnTodos.classList.remove('active');
-          if (selectedMarkets.size === 0) {
-            selectedMarkets = new Set(['all']);
-            btnTodos.classList.add('active');
-            btnTodos.classList.remove('none-selected');
-          } else {
-            btnTodos.classList.add('none-selected');
           }
         }
+
+        // Si quedan todos activos → volver a 'all'
+        if (selectedMarkets.size === ALL_MARKETS.length) {
+          selectedMarkets = new Set(['all']);
+        }
+        // Si quedan 0 → activar todos
+        if (selectedMarkets.size === 0) {
+          selectedMarkets = new Set(['all']);
+        }
+
+        updateSidebarUI();
 
         const term = document.getElementById('searchInput').value.trim();
         if (term && term.length >= 2) {
-          if (selectedMarkets.has('all') || allProducts.length === 0) {
-            search();
-          } else {
-            renderProducts();
-          }
+          if (selectedMarkets.has('all') || allProducts.length === 0) search();
+          else renderProducts();
         }
       }
+
+      function selectAllMarkets() {
+        if (selectedMarkets.has('all')) {
+          // Todos activos → deseleccionar todos (oscuro)
+          selectedMarkets = new Set();
+          updateSidebarUI();
+          // Sin mercados activos mostramos nada
+          const term = document.getElementById('searchInput').value.trim();
+          if (term && term.length >= 2) renderProducts();
+        } else {
+          // No todos activos → seleccionar todos (naranja)
+          selectedMarkets = new Set(['all']);
+          updateSidebarUI();
+          const term = document.getElementById('searchInput').value.trim();
+          if (term && term.length >= 2) search();
+        }
+      }
+
+      function updateSidebarUI() {
+        const allActive = selectedMarkets.has('all');
+        document.getElementById('btnTodos').classList.toggle('active', allActive);
+        ALL_MARKETS.forEach(m => {
+          const row = document.querySelector(`.sidebar-market-row[data-market="${m}"]`);
+          if (row) row.classList.toggle('active', allActive || selectedMarkets.has(m));
+        });
+      }
+
+      // Aseguramos que renderProducts filtre correctamente cuando no hay ninguno activo
+      const _origFilter = p => selectedMarkets.has('all') || selectedMarkets.has(p.market);
+
+      function updateMarketCounts(products) {
+        const counts = {};
+        ALL_MARKETS.forEach(m => counts[m] = 0);
+        products.forEach(p => { if (counts[p.market] !== undefined) counts[p.market]++; });
+        ALL_MARKETS.forEach(m => {
+          const el = document.getElementById('count-' + m);
+          if (el) el.textContent = counts[m] > 0 ? counts[m] + ' resultados' : '';
+        });
+      }
+
+      function toggleMarket(btn) { toggleMarketSidebar(btn.dataset.market); }
 
       function setSort(btn) {
         document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
@@ -901,6 +1228,7 @@
           const res = await fetch(`/find?term=${encodeURIComponent(term)}${marketsParam}`);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           allProducts = await res.json();
+          updateMarketCounts(allProducts);
 
           if (allProducts.length === 0) {
             showState('empty');
@@ -1321,7 +1649,8 @@
             : p.price === sorted[0].price;
 
           return `
-            <div style="
+            <div onclick="openProductPanel('${escHtml(p.market)}','${escHtml(p.name)}','${escHtml(p.image ?? '')}')" style="
+              cursor: pointer;
               background: var(--bg2);
               border: 1.5px solid ${isCheapest ? 'var(--yellow)' : 'var(--border)'};
               border-radius: 12px;
@@ -1331,7 +1660,8 @@
               min-width: 150px;
               max-width: 180px;
               position: relative;
-            ">
+              transition: border-color 0.2s, transform 0.15s;
+            " onmouseenter="this.style.transform='translateY(-2px)';this.style.borderColor='var(--orange)'" onmouseleave="this.style.transform='';this.style.borderColor='${isCheapest ? 'var(--yellow)' : 'var(--border)'}'">
               ${isCheapest ? '<span style="position:absolute;top:6px;left:6px;background:var(--yellow);color:#000;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;z-index:1;letter-spacing:0.5px;">MÁS BARATO</span>' : ''}
               ${p.image
                 ? `<img src="${p.image}" alt="${p.name}" style="width:100%;aspect-ratio:1;object-fit:contain;background:#fff;padding:0.5rem;" onerror="this.style.display='none'">`
@@ -1493,6 +1823,283 @@
         const btn = document.getElementById('panelBtnSubmit');
         if (btn) btn.disabled = val === 0;
       }
+
+      /* ===== GOOGLE MAPS ROUTE ===== */
+      let gmMap = null, gmDirectionsService = null, gmDirectionsRenderer = null, gmGeocoder = null;
+      const darkMapStyle = [
+        { elementType: 'geometry', stylers: [{ color: '#1a1a1c' }] },
+        { elementType: 'labels.text.fill', stylers: [{ color: '#888884' }] },
+        { elementType: 'labels.text.stroke', stylers: [{ color: '#0e0e0f' }] },
+        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2e2e33' }] },
+        { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1a1c' }] },
+        { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3a3a40' }] },
+        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e0e0f' }] },
+        { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+        { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+      ];
+
+      function initGoogleMaps() { /* callback al cargar el script */ }
+
+      let gmCustomMarkers = [];
+
+      function openRouteModal() {
+        document.getElementById('routeModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('routeStatus').style.display = 'block';
+        document.getElementById('routeStatus').textContent = 'Obteniendo tu ubicación...';
+        document.getElementById('routeInfo').style.display = 'none';
+        document.getElementById('routeSummary').style.display = 'none';
+        if (!navigator.geolocation) {
+          document.getElementById('routeStatus').textContent = 'Tu navegador no soporta geolocalización.';
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(onGotPosition, onGeoError, { timeout: 10000 });
+      }
+
+      function closeRouteModal() {
+        document.getElementById('routeModal').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRouteModal(); });
+
+      function onGeoError() {
+        document.getElementById('routeStatus').textContent = 'No se pudo obtener la ubicación. Comprueba los permisos del navegador.';
+      }
+
+      function clearCustomMarkers() {
+        gmCustomMarkers.forEach(m => m.setMap(null));
+        gmCustomMarkers = [];
+      }
+
+      async function onGotPosition(pos) {
+        const userLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+        // Inicializar mapa una sola vez
+        if (!gmMap) {
+          gmMap = new google.maps.Map(document.getElementById('routeMap'), {
+            center: userLatLng, zoom: 13, styles: darkMapStyle, zoomControl: true,
+          });
+          gmDirectionsService = new google.maps.DirectionsService();
+          gmDirectionsRenderer = new google.maps.DirectionsRenderer({
+            suppressMarkers: true,  // marcadores propios
+            polylineOptions: { strokeColor: '#FF6B35', strokeWeight: 5, strokeOpacity: 0.9 }
+          });
+          gmDirectionsRenderer.setMap(gmMap);
+          gmGeocoder = new google.maps.Geocoder();
+        } else {
+          gmMap.setCenter(userLatLng);
+          clearCustomMarkers();
+        }
+
+        // Marker del usuario — círculo teal con borde blanco
+        const userMarker = new google.maps.Marker({
+          position: userLatLng, map: gmMap, title: 'Tu ubicación', zIndex: 100,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12, fillColor: '#2EC4B6', fillOpacity: 1,
+            strokeColor: '#ffffff', strokeWeight: 3
+          },
+          label: { text: '⌂', color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }
+        });
+        gmCustomMarkers.push(userMarker);
+
+        const markets = lastBestByMarketResult.length > 0
+          ? lastBestByMarketResult.map(p => p.market)
+          : ['Mercadona', 'Aldi', 'Consum', 'Dia'];
+
+        document.getElementById('routeStatus').textContent = `Buscando ${markets.join(', ')} cerca de ti...`;
+
+        // Reverse geocode UNA sola vez para obtener la ciudad
+        const city = await reverseGeocodeCity(userLatLng);
+
+        // Geocodificar cada supermercado secuencialmente para evitar rate limits
+        const validWaypoints = [];
+        for (const m of markets) {
+          const wp = await geocodeMarket(m, city);
+          if (wp) validWaypoints.push(wp);
+        }
+
+        if (validWaypoints.length === 0) {
+          document.getElementById('routeStatus').textContent = 'No se encontraron supermercados cercanos.';
+          return;
+        }
+
+        document.getElementById('routeStatus').style.display = 'none';
+        paintStoreMarkers(userLatLng, validWaypoints);
+      }
+
+      function reverseGeocodeCity(latLng) {
+        return new Promise((resolve) => {
+          gmGeocoder.geocode({ location: latLng }, (results, status) => {
+            if (status === 'OK' && results.length > 0) {
+              const comp = results[0].address_components.find(c => c.types.includes('locality'));
+              resolve(comp ? comp.long_name : '');
+            } else {
+              resolve('');
+            }
+          });
+        });
+      }
+
+      async function geocodeMarket(marketName, city) {
+        // Intentar con la nueva Places API (busca tiendas reales por nombre y proximidad)
+        try {
+          const center = gmMap.getCenter();
+          const { Place } = await google.maps.importLibrary('places');
+          const { places } = await Place.searchByText({
+            textQuery: `${marketName} supermercado`,
+            fields: ['displayName', 'location', 'formattedAddress'],
+            locationBias: { center: center, radius: 8000 },
+            maxResultCount: 1,
+          });
+          if (places && places.length > 0) {
+            return {
+              name: marketName,
+              latLng: places[0].location,
+              address: places[0].formattedAddress
+            };
+          }
+        } catch (e) {
+          console.warn(`Places API falló para ${marketName}, usando geocoder:`, e);
+        }
+
+        // Fallback: Geocoding API con ciudad
+        return new Promise((resolve) => {
+          const query = city ? `${marketName} ${city}` : marketName;
+          gmGeocoder.geocode({ address: query }, (results, status) => {
+            if (status === 'OK' && results.length > 0) {
+              resolve({ name: marketName, latLng: results[0].geometry.location, address: results[0].formatted_address });
+            } else {
+              resolve(null);
+            }
+          });
+        });
+      }
+
+      const markerColors = ['#FF6B35','#FFD166','#2EC4B6','#a78bfa','#f472b6','#34d399','#60a5fa','#fb923c'];
+      let gmUserLatLng = null;
+      let gmOpenInfoWindow = null;
+
+      function paintStoreMarkers(userLatLng, waypoints) {
+        gmUserLatLng = userLatLng;
+        clearCustomMarkers();
+
+        // Limpiar ruta anterior si la hay
+        gmDirectionsRenderer.set('directions', null);
+
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(userLatLng);
+
+        // Marcador del usuario
+        const userMarker = new google.maps.Marker({
+          position: userLatLng, map: gmMap, title: 'Tu ubicación', zIndex: 100,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12, fillColor: '#2EC4B6', fillOpacity: 1,
+            strokeColor: '#ffffff', strokeWeight: 3
+          },
+          label: { text: '⌂', color: '#ffffff', fontSize: '13px', fontWeight: 'bold' }
+        });
+        gmCustomMarkers.push(userMarker);
+
+        waypoints.forEach((stop, idx) => {
+          const color = markerColors[idx % markerColors.length];
+          bounds.extend(stop.latLng);
+
+          const marker = new google.maps.Marker({
+            position: stop.latLng, map: gmMap,
+            title: stop.name, zIndex: 50,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 16, fillColor: color, fillOpacity: 1,
+              strokeColor: '#ffffff', strokeWeight: 2.5
+            },
+            label: { text: String(idx + 1), color: '#000', fontSize: '11px', fontWeight: 'bold' }
+          });
+
+          const infoWindow = new google.maps.InfoWindow({
+            content: `<div style="font-family:'DM Sans',sans-serif;padding:8px 6px;min-width:170px;background:#1A1A1C;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);">
+              <strong style="font-size:13px;color:#F0EEE8;">${stop.name}</strong>
+              ${stop.address ? `<div style="font-size:11px;color:#888884;margin-top:4px;line-height:1.4;">${stop.address}</div>` : ''}
+              <button onclick="routeToStore(${idx})" style="margin-top:9px;background:#FF6B35;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;width:100%;font-weight:600;">
+                Ver ruta →
+              </button>
+            </div>`
+          });
+
+          marker.addListener('click', () => {
+            if (gmOpenInfoWindow) gmOpenInfoWindow.close();
+            infoWindow.open(gmMap, marker);
+            gmOpenInfoWindow = infoWindow;
+          });
+
+          gmCustomMarkers.push(marker);
+        });
+
+        gmMap.fitBounds(bounds, { padding: 60 });
+        gmMap._waypoints = waypoints;
+
+        document.getElementById('routeSummary').style.display = 'none';
+        document.getElementById('routeInfo').innerHTML = `
+          <div style="text-align:center;padding:0.7rem;color:var(--text-dim);font-size:0.83rem;">
+            Haz clic en un supermercado para ver la ruta desde tu ubicación
+          </div>`;
+        document.getElementById('routeInfo').style.display = 'block';
+      }
+
+      function routeToStore(idx) {
+        if (gmOpenInfoWindow) { gmOpenInfoWindow.close(); gmOpenInfoWindow = null; }
+        const waypoints = gmMap._waypoints;
+        const stop = waypoints[idx];
+        document.getElementById('routeStatus').textContent = `Calculando ruta a ${stop.name}...`;
+        document.getElementById('routeStatus').style.display = 'block';
+        document.getElementById('routeSummary').style.display = 'none';
+
+        gmDirectionsService.route({
+          origin: gmUserLatLng,
+          destination: stop.latLng,
+          travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+          if (status === 'OK') {
+            gmDirectionsRenderer.setDirections(result);
+            document.getElementById('routeStatus').style.display = 'none';
+            renderSingleRouteInfo(result, stop);
+          } else {
+            document.getElementById('routeStatus').textContent = `No se pudo calcular la ruta: ${status}`;
+          }
+        });
+      }
+
+      function renderSingleRouteInfo(result, stop) {
+        const leg = result.routes[0].legs[0];
+        document.getElementById('routeTotalDist').textContent = leg.distance.text;
+        document.getElementById('routeTotalTime').textContent = leg.duration.text;
+        document.getElementById('routeTotalStops').textContent = stop.name;
+        document.getElementById('routeSummary').style.display = 'flex';
+
+        document.getElementById('routeInfo').innerHTML = `
+          <div class="route-step">
+            <div class="route-step-num" style="background:var(--teal);">⌂</div>
+            <div><strong>Tu ubicación</strong></div>
+          </div>
+          <div class="route-step">
+            <div class="route-step-num" style="background:var(--orange);">1</div>
+            <div>
+              <strong>${stop.name}</strong>
+              <span style="color:var(--text-dim);margin-left:6px;font-size:0.78rem;">${leg.distance.text} · ${leg.duration.text}</span>
+              ${stop.address ? `<div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px;">${stop.address}</div>` : ''}
+            </div>
+          </div>
+          <div style="margin-top:0.5rem;">
+            <button onclick="paintStoreMarkers(gmUserLatLng, gmMap._waypoints)"
+              style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text-dim);font-size:0.78rem;cursor:pointer;width:100%;">
+              ← Ver todos los supermercados
+            </button>
+          </div>`;
+        document.getElementById('routeInfo').style.display = 'block';
+      }
+      /* ===== FIN GOOGLE MAPS ROUTE ===== */
 
       async function submitPanelReview() {
         if (!isAuth || panelStars === 0 || !panelProduct) return;
