@@ -15,18 +15,38 @@
   href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
   rel="stylesheet">
   <style>
+      /* ── TEMA OSCURO (por defecto) ── */
       :root {
         --orange: #FF6B35;
-        --orange-dark: #E04E18;
+        --orange-dark: #D94F1A;
         --yellow: #FFD166;
         --teal: #2EC4B6;
-        --bg: #0E0E0F;
-        --bg2: #1A1A1C;
-        --bg3: #242427;
-        --border: #2E2E33;
-        --text: #F0EEE8;
-        --text-dim: #888884;
-        --text-muted: #555552;
+        --bg:        #13151C;
+        --bg2:       #1E2130;
+        --bg3:       #272C3E;
+        --border:    #363C54;
+        --text:      #F0EDE8;
+        --text-dim:  #9BA3BE;
+        --text-muted:#717899;
+        --header-bg: rgba(19,21,28,0.93);
+        --shadow:    0 2px 16px rgba(0,0,0,0.45);
+      }
+
+      /* ── TEMA CLARO ── */
+      html[data-theme="light"] {
+        --orange: #D4510A;
+        --orange-dark: #B53D05;
+        --yellow: #8F6B00;
+        --teal: #0E8A84;
+        --bg:        #F4F6FB;
+        --bg2:       #FFFFFF;
+        --bg3:       #ECEEF7;
+        --border:    #CDD1E8;
+        --text:      #1A1D2E;
+        --text-dim:  #444968;
+        --text-muted:#6B7299;
+        --header-bg: rgba(255,255,255,0.93);
+        --shadow:    0 2px 16px rgba(0,0,0,0.10);
       }
 
       * {
@@ -51,10 +71,24 @@
         border-bottom: 1px solid var(--border);
         position: sticky;
         top: 0;
-        background: rgba(14, 14, 15, 0.92);
+        background: var(--header-bg);
         backdrop-filter: blur(12px);
         z-index: 100;
+        transition: background 0.3s;
       }
+
+      .theme-btn {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.35rem 0.65rem;
+        font-size: 1.05rem;
+        cursor: pointer;
+        line-height: 1;
+        transition: background 0.2s, border-color 0.2s;
+        flex-shrink: 0;
+      }
+      .theme-btn:hover { background: var(--border); }
 
       .logo-icon {
         width: 38px;
@@ -856,6 +890,7 @@
     <div class="logo-text">Super<span>Cart</span></div>
 
     <div style="margin-left: auto; display: flex; gap: 0.75rem; align-items: center;">
+      <button id="themeBtn" class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
       @if (User.Identity != null && User.Identity.IsAuthenticated)
       {
         <span style="color: var(--text-dim); font-size: 0.85rem;">@(User.Identity!.Name?.Split('@')[0] ?? User.Identity.Name)</span>
@@ -956,9 +991,8 @@
 
   <div class="main-content">
   <div class="hero">
-    <h1>Compara precios en<br><em>todos los supermercados</em></h1>
+    <h1>Compara precios<br><em> en todos los supermercados</em></h1>
     <p>Busca cualquier producto y compara precios al instante entre Mercadona, Consum, Aldi y más.</p>
-
     <div class="search-wrap">
       <div class="search-row">
         <input type="text" id="searchInput" placeholder="Busca un producto... ej: leche entera" autocomplete="off" />
@@ -1867,109 +1901,158 @@
         document.getElementById('routeStatus').textContent = 'No se pudo obtener la ubicación. Comprueba los permisos del navegador.';
       }
 
+
       function clearCustomMarkers() {
         gmCustomMarkers.forEach(m => m.setMap(null));
         gmCustomMarkers = [];
       }
 
-      async function onGotPosition(pos) {
-        const userLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      let gmUserLatLng = null;
 
-        // Inicializar mapa una sola vez
+      async function onGotPosition(pos) {
+        gmUserLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
         if (!gmMap) {
           gmMap = new google.maps.Map(document.getElementById('routeMap'), {
-            center: userLatLng, zoom: 13, styles: darkMapStyle, zoomControl: true,
+            center: gmUserLatLng, zoom: 13, styles: darkMapStyle, zoomControl: true,
           });
-          gmDirectionsService = new google.maps.DirectionsService();
+          gmDirectionsService  = new google.maps.DirectionsService();
           gmDirectionsRenderer = new google.maps.DirectionsRenderer({
-            suppressMarkers: true,  // marcadores propios
+            suppressMarkers: true,
             polylineOptions: { strokeColor: '#FF6B35', strokeWeight: 5, strokeOpacity: 0.9 }
           });
           gmDirectionsRenderer.setMap(gmMap);
           gmGeocoder = new google.maps.Geocoder();
-        } else {
-          gmMap.setCenter(userLatLng);
-          clearCustomMarkers();
         }
 
-        // Marker del usuario — círculo teal con borde blanco
+        document.getElementById('routeStatus').textContent = 'Buscando supermercados...';
+        const city = await reverseGeocodeCity(gmUserLatLng.lat, gmUserLatLng.lng);
+        await paintStoreMarkers(gmUserLatLng, city);
+        document.getElementById('routeStatus').style.display = 'none';
+      }
+
+      const MARKET_DISPLAY = {
+        MERCADONA:'Mercadona', CONSUM:'Consum', ALDI:'Aldi', DIA:'Dia',
+        ALCAMPO:'Alcampo', AMETLLER:"Ametller Origen", BONPREU:'Bonpreu', CONDIS:'Condis'
+      };
+
+      async function paintStoreMarkers(userLatLng, city) {
+        clearCustomMarkers();
+
+        // Marker usuario
         const userMarker = new google.maps.Marker({
-          position: userLatLng, map: gmMap, title: 'Tu ubicación', zIndex: 100,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12, fillColor: '#2EC4B6', fillOpacity: 1,
-            strokeColor: '#ffffff', strokeWeight: 3
-          },
-          label: { text: '⌂', color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }
+          position: userLatLng, map: gmMap,
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8,
+                  fillColor: '#2EC4B6', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 },
+          title: 'Tu ubicación', zIndex: 999
         });
         gmCustomMarkers.push(userMarker);
 
-        const markets = lastBestByMarketResult.length > 0
-          ? lastBestByMarketResult.map(p => p.market)
-          : ['Mercadona', 'Aldi', 'Consum', 'Dia'];
+        // Mercados activos
+        const activeSet = selectedMarkets.has('all')
+          ? new Set(ALL_MARKETS)
+          : new Set(ALL_MARKETS.filter(m => selectedMarkets.has(m)));
 
-        document.getElementById('routeStatus').textContent = `Buscando ${markets.join(', ')} cerca de ti...`;
+        let idx = 1;
+        for (const market of ALL_MARKETS) {
+          if (!activeSet.has(market)) continue;
+          const displayName = MARKET_DISPLAY[market] || market;
+          const result = await geocodeMarket(displayName, city);
+          if (!result) continue;
 
-        // Reverse geocode UNA sola vez para obtener la ciudad
-        const city = await reverseGeocodeCity(userLatLng);
+          const label = String(idx++);
+          const marker = new google.maps.Marker({
+            position: result.location, map: gmMap,
+            label: { text: label, color: '#fff', fontWeight: 'bold', fontSize: '12px' },
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 16,
+                    fillColor: '#FF6B35', fillOpacity: 1, strokeColor: '#D94F1A', strokeWeight: 2 },
+            title: displayName, zIndex: 100
+          });
 
-        // Geocodificar cada supermercado secuencialmente para evitar rate limits
-        const validWaypoints = [];
-        for (const m of markets) {
-          const wp = await geocodeMarket(m, city);
-          if (wp) validWaypoints.push(wp);
+          const infoWin = new google.maps.InfoWindow({
+            content: `<div style="background:#1E2130;color:#F0EDE8;padding:8px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;min-width:140px;">
+              <strong style="color:#FF6B35;font-size:0.95rem;">${displayName}</strong><br>
+              <span style="font-size:0.78rem;color:#9BA3BE;">${result.address}</span><br>
+              <button onclick="routeToStore(event._marker)" style="display:none"></button>
+            </div>`
+          });
+
+          marker.addListener('click', () => {
+            routeToStore(marker, displayName, result.address, result.location);
+          });
+
+          gmCustomMarkers.push(marker);
         }
-
-        if (validWaypoints.length === 0) {
-          document.getElementById('routeStatus').textContent = 'No se encontraron supermercados cercanos.';
-          return;
-        }
-
-        document.getElementById('routeStatus').style.display = 'none';
-        paintStoreMarkers(userLatLng, validWaypoints);
+        gmMap.setCenter(userLatLng);
       }
 
-      function reverseGeocodeCity(latLng) {
-        return new Promise((resolve) => {
-          gmGeocoder.geocode({ location: latLng }, (results, status) => {
-            if (status === 'OK' && results.length > 0) {
-              const comp = results[0].address_components.find(c => c.types.includes('locality'));
-              resolve(comp ? comp.long_name : '');
-            } else {
-              resolve('');
-            }
-          });
+      async function routeToStore(marker, storeName, storeAddr, storeLoc) {
+        document.getElementById('routeStatus').style.display = 'block';
+        document.getElementById('routeStatus').textContent = `Calculando ruta a ${storeName}...`;
+        document.getElementById('routeInfo').style.display = 'none';
+        document.getElementById('routeSummary').style.display = 'none';
+
+        gmDirectionsService.route({
+          origin: gmUserLatLng,
+          destination: storeLoc,
+          travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+          if (status === 'OK') {
+            gmDirectionsRenderer.setDirections(result);
+            document.getElementById('routeStatus').style.display = 'none';
+            renderSingleRouteInfo(result, storeName, storeAddr);
+          } else {
+            document.getElementById('routeStatus').textContent = 'No se pudo calcular la ruta.';
+          }
         });
       }
 
-      async function geocodeMarket(marketName, city) {
-        // Intentar con la nueva Places API (busca tiendas reales por nombre y proximidad)
-        try {
-          const center = gmMap.getCenter();
-          const { Place } = await google.maps.importLibrary('places');
-          const { places } = await Place.searchByText({
-            textQuery: `${marketName} supermercado`,
-            fields: ['displayName', 'location', 'formattedAddress'],
-            locationBias: { center: center, radius: 8000 },
-            maxResultCount: 1,
-          });
-          if (places && places.length > 0) {
-            return {
-              name: marketName,
-              latLng: places[0].location,
-              address: places[0].formattedAddress
-            };
-          }
-        } catch (e) {
-          console.warn(`Places API falló para ${marketName}, usando geocoder:`, e);
-        }
+      function renderSingleRouteInfo(result, storeName, storeAddr) {
+        const leg = result.routes[0].legs[0];
+        const steps = leg.steps;
 
-        // Fallback: Geocoding API con ciudad
-        return new Promise((resolve) => {
-          const query = city ? `${marketName} ${city}` : marketName;
-          gmGeocoder.geocode({ address: query }, (results, status) => {
-            if (status === 'OK' && results.length > 0) {
-              resolve({ name: marketName, latLng: results[0].geometry.location, address: results[0].formatted_address });
+        // Resumen
+        document.getElementById('routeSummary').style.display = 'flex';
+        document.getElementById('routeSummary').innerHTML =
+          `<span>🏪 <strong>${storeName}</strong></span>
+           <span>📍 ${leg.distance.text}</span>
+           <span>⏱ ${leg.duration.text}</span>`;
+
+        // Pasos
+        const info = document.getElementById('routeInfo');
+        info.style.display = 'block';
+        info.innerHTML = steps.map((s, i) =>
+          `<div class="route-step">
+            <span class="route-step-num">${i+1}</span>
+            <span>${s.instructions.replace(/<[^>]+>/g,'')}</span>
+            <span style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;">${s.distance.text}</span>
+          </div>`
+        ).join('');
+      }
+
+      async function geocodeMarket(name, city) {
+        // Primero intentamos Places API nueva
+        if (google.maps && google.maps.places && google.maps.places.Place) {
+          try {
+            const { places } = await google.maps.places.Place.searchByText({
+              textQuery: `${name} ${city}`,
+              fields: ['displayName', 'formattedAddress', 'location'],
+              maxResultCount: 1,
+            });
+            if (places && places.length > 0) {
+              const p = places[0];
+              return { location: p.location, address: p.formattedAddress || name };
+            }
+          } catch(e) { /* fallback a geocoder */ }
+        }
+        // Fallback: Geocoder
+        return new Promise(resolve => {
+          gmGeocoder.geocode({ address: `${name} ${city}` }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              resolve({
+                location: results[0].geometry.location,
+                address: results[0].formatted_address
+              });
             } else {
               resolve(null);
             }
@@ -1977,146 +2060,38 @@
         });
       }
 
-      const markerColors = ['#FF6B35','#FFD166','#2EC4B6','#a78bfa','#f472b6','#34d399','#60a5fa','#fb923c'];
-      let gmUserLatLng = null;
-      let gmOpenInfoWindow = null;
-
-      function paintStoreMarkers(userLatLng, waypoints) {
-        gmUserLatLng = userLatLng;
-        clearCustomMarkers();
-
-        // Limpiar ruta anterior si la hay
-        gmDirectionsRenderer.set('directions', null);
-
-        const bounds = new google.maps.LatLngBounds();
-        bounds.extend(userLatLng);
-
-        // Marcador del usuario
-        const userMarker = new google.maps.Marker({
-          position: userLatLng, map: gmMap, title: 'Tu ubicación', zIndex: 100,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12, fillColor: '#2EC4B6', fillOpacity: 1,
-            strokeColor: '#ffffff', strokeWeight: 3
-          },
-          label: { text: '⌂', color: '#ffffff', fontSize: '13px', fontWeight: 'bold' }
-        });
-        gmCustomMarkers.push(userMarker);
-
-        waypoints.forEach((stop, idx) => {
-          const color = markerColors[idx % markerColors.length];
-          bounds.extend(stop.latLng);
-
-          const marker = new google.maps.Marker({
-            position: stop.latLng, map: gmMap,
-            title: stop.name, zIndex: 50,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 16, fillColor: color, fillOpacity: 1,
-              strokeColor: '#ffffff', strokeWeight: 2.5
-            },
-            label: { text: String(idx + 1), color: '#000', fontSize: '11px', fontWeight: 'bold' }
+      async function reverseGeocodeCity(lat, lng) {
+        if (!gmGeocoder) gmGeocoder = new google.maps.Geocoder();
+        return new Promise(resolve => {
+          gmGeocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              const comp = results[0].address_components.find(c =>
+                c.types.includes('locality') || c.types.includes('administrative_area_level_2')
+              );
+              resolve(comp ? comp.long_name : 'Barcelona');
+            } else {
+              resolve('Barcelona');
+            }
           });
-
-          const infoWindow = new google.maps.InfoWindow({
-            content: `<div style="font-family:'DM Sans',sans-serif;padding:8px 6px;min-width:170px;background:#1A1A1C;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);">
-              <strong style="font-size:13px;color:#F0EEE8;">${stop.name}</strong>
-              ${stop.address ? `<div style="font-size:11px;color:#888884;margin-top:4px;line-height:1.4;">${stop.address}</div>` : ''}
-              <button onclick="routeToStore(${idx})" style="margin-top:9px;background:#FF6B35;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;width:100%;font-weight:600;">
-                Ver ruta →
-              </button>
-            </div>`
-          });
-
-          marker.addListener('click', () => {
-            if (gmOpenInfoWindow) gmOpenInfoWindow.close();
-            infoWindow.open(gmMap, marker);
-            gmOpenInfoWindow = infoWindow;
-          });
-
-          gmCustomMarkers.push(marker);
-        });
-
-        gmMap.fitBounds(bounds, { padding: 60 });
-        gmMap._waypoints = waypoints;
-
-        document.getElementById('routeSummary').style.display = 'none';
-        document.getElementById('routeInfo').innerHTML = `
-          <div style="text-align:center;padding:0.7rem;color:var(--text-dim);font-size:0.83rem;">
-            Haz clic en un supermercado para ver la ruta desde tu ubicación
-          </div>`;
-        document.getElementById('routeInfo').style.display = 'block';
-      }
-
-      function routeToStore(idx) {
-        if (gmOpenInfoWindow) { gmOpenInfoWindow.close(); gmOpenInfoWindow = null; }
-        const waypoints = gmMap._waypoints;
-        const stop = waypoints[idx];
-        document.getElementById('routeStatus').textContent = `Calculando ruta a ${stop.name}...`;
-        document.getElementById('routeStatus').style.display = 'block';
-        document.getElementById('routeSummary').style.display = 'none';
-
-        gmDirectionsService.route({
-          origin: gmUserLatLng,
-          destination: stop.latLng,
-          travelMode: google.maps.TravelMode.DRIVING
-        }, (result, status) => {
-          if (status === 'OK') {
-            gmDirectionsRenderer.setDirections(result);
-            document.getElementById('routeStatus').style.display = 'none';
-            renderSingleRouteInfo(result, stop);
-          } else {
-            document.getElementById('routeStatus').textContent = `No se pudo calcular la ruta: ${status}`;
-          }
         });
       }
 
-      function renderSingleRouteInfo(result, stop) {
-        const leg = result.routes[0].legs[0];
-        document.getElementById('routeTotalDist').textContent = leg.distance.text;
-        document.getElementById('routeTotalTime').textContent = leg.duration.text;
-        document.getElementById('routeTotalStops').textContent = stop.name;
-        document.getElementById('routeSummary').style.display = 'flex';
+      // ── THEME TOGGLE ──
+      (function() {
+        const saved = localStorage.getItem('sc-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+        const btn = document.getElementById('themeBtn');
+        if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+      })();
 
-        document.getElementById('routeInfo').innerHTML = `
-          <div class="route-step">
-            <div class="route-step-num" style="background:var(--teal);">⌂</div>
-            <div><strong>Tu ubicación</strong></div>
-          </div>
-          <div class="route-step">
-            <div class="route-step-num" style="background:var(--orange);">1</div>
-            <div>
-              <strong>${stop.name}</strong>
-              <span style="color:var(--text-dim);margin-left:6px;font-size:0.78rem;">${leg.distance.text} · ${leg.duration.text}</span>
-              ${stop.address ? `<div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px;">${stop.address}</div>` : ''}
-            </div>
-          </div>
-          <div style="margin-top:0.5rem;">
-            <button onclick="paintStoreMarkers(gmUserLatLng, gmMap._waypoints)"
-              style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text-dim);font-size:0.78rem;cursor:pointer;width:100%;">
-              ← Ver todos los supermercados
-            </button>
-          </div>`;
-        document.getElementById('routeInfo').style.display = 'block';
+      function toggleTheme() {
+        const cur  = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('sc-theme', next);
+        document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
       }
-      /* ===== FIN GOOGLE MAPS ROUTE ===== */
 
-      async function submitPanelReview() {
-        if (!isAuth || panelStars === 0 || !panelProduct) return;
-        const comentario = document.getElementById('panelComment').value;
-        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-        const res = await fetch('/Review/Create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
-          body: `market=${encodeURIComponent(panelProduct.market)}&productName=${encodeURIComponent(panelProduct.name)}&productImage=${encodeURIComponent(panelProduct.image)}&estrellas=${panelStars}&comentario=${encodeURIComponent(comentario)}`
-        });
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('panelSuccess').style.display = 'block';
-          setTimeout(() => openProductPanel(panelProduct.market, panelProduct.name, panelProduct.image), 1200);
-        }
-      }
-  </script>
-</body>
-@Html.AntiForgeryToken()
+    </script>
+  </body>
 </html>

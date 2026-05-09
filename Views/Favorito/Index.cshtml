@@ -9,18 +9,19 @@
   <title>Mis Favoritos — SuperCart</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <style>
+    /* ── TEMA OSCURO (por defecto) ── */
     :root {
-      --orange: #FF6B35;
-      --orange-dark: #E04E18;
-      --yellow: #FFD166;
-      --teal: #2EC4B6;
-      --bg: #0E0E0F;
-      --bg2: #1A1A1C;
-      --bg3: #242427;
-      --border: #2E2E33;
-      --text: #F0EEE8;
-      --text-dim: #888884;
-      --text-muted: #555552;
+      --orange: #FF6B35; --orange-dark: #D94F1A; --yellow: #FFD166; --teal: #2EC4B6;
+      --bg: #13151C; --bg2: #1E2130; --bg3: #272C3E; --border: #363C54;
+      --text: #F0EDE8; --text-dim: #9BA3BE; --text-muted: #717899;
+      --header-bg: rgba(19,21,28,0.93); --shadow: 0 2px 16px rgba(0,0,0,0.45);
+    }
+    /* ── TEMA CLARO ── */
+    html[data-theme="light"] {
+      --orange: #D4510A; --orange-dark: #B53D05; --yellow: #8F6B00; --teal: #0E8A84;
+      --bg: #F4F6FB; --bg2: #FFFFFF; --bg3: #ECEEF7; --border: #CDD1E8;
+      --text: #1A1D2E; --text-dim: #444968; --text-muted: #6B7299;
+      --header-bg: rgba(255,255,255,0.93); --shadow: 0 2px 16px rgba(0,0,0,0.10);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
@@ -32,13 +33,20 @@
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
-      background: rgba(14,14,15,0.92);
+      background: var(--header-bg);
       backdrop-filter: blur(12px);
       z-index: 100;
+      transition: background 0.3s;
     }
     .logo-text { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--orange); letter-spacing: -0.5px; }
     .logo-text span { color: var(--text); }
     .header-right { margin-left: auto; display: flex; gap: 0.75rem; align-items: center; }
+    .theme-btn {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.35rem 0.65rem; font-size: 1.05rem; cursor: pointer;
+      line-height: 1; transition: background 0.2s, border-color 0.2s; flex-shrink: 0;
+    }
+    .theme-btn:hover { background: var(--border); }
     .btn-back {
       background: transparent;
       border: 1px solid var(--border);
@@ -134,6 +142,7 @@
   <header>
     <div class="logo-text">Super<span>Cart</span></div>
     <div class="header-right">
+      <button id="themeBtn" class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
       <a href="/" class="btn-back">← Volver al comparador</a>
     </div>
   </header>
@@ -203,6 +212,22 @@
 </div>
 
 <script>
+  // ── THEME TOGGLE ──
+  (function() {
+    const saved = localStorage.getItem('sc-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  })();
+
+  function toggleTheme() {
+    const cur  = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('sc-theme', next);
+    document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+  }
+
   let reviewsLoaded = false;
 
   function showTab(tab) {
