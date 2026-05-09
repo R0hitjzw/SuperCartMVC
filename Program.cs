@@ -29,6 +29,9 @@ builder.Services.AddScoped<IFinder, CondisFinder>();
 // SISTEMA DE ROTACIÓ DE API-KEYS D'ANTHROPIC - que amb el rate limit, la app funciona irregularment.
 builder.Services.AddSingleton<SuperCartMVC.Services.AnthropicKeyRotator>();
 
+// TRADUCTOR ES→CA PER BONPREU - singleton amb caché estàtica, reutilitza entre requests
+builder.Services.AddSingleton<SuperCartMVC.Services.CatalanTranslatorService>();
+
 
 // REGISTRO DE SERVICIOS PARA LOG IN, AFEGIR A LA DI (injecció de dependències) PERQUE DESPRES EL CONTROLADOR PUGUI UTILITZAR-LOS
 builder.Services.AddDbContext<AppDbContext>(options =>

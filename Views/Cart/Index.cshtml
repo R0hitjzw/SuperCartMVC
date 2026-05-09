@@ -8,6 +8,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Lista de la Compra — SuperCart</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <style>
     /* ── TEMA OSCURO (por defecto) ── */
@@ -31,6 +33,7 @@
       border-bottom: 1px solid var(--border); position: sticky; top: 0;
       background: var(--header-bg); backdrop-filter: blur(12px); z-index: 100; transition: background 0.3s;
     }
+    .logo-icon { width: 36px; height: 36px; }
     .logo-text { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--orange); }
     .logo-text span { color: var(--text); }
     .btn-back {
@@ -126,10 +129,22 @@
     .route-modal-header h2 { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; color:var(--orange); margin:0; }
     #cartRouteMap { width:100%; height:400px; flex-shrink:0; }
     #cartRouteStatus { padding:1rem 1.25rem; font-size:0.83rem; color:var(--text-dim); text-align:center; }
-    #cartRouteInfo { padding:0.75rem 1.25rem; overflow-y:auto; max-height:220px; flex-shrink:0; }
+    #cartRouteInfo {
+      padding: 0.75rem 1.25rem 0;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 60px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    #cartRouteInfo::-webkit-scrollbar { display: none; }
+    #cartRouteInfo .route-step:last-child {
+      border-bottom: none;
+      padding-bottom: 1.25rem;
+    }
     .route-step {
-      display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0;
-      border-bottom:1px solid var(--border); font-size:0.82rem; color:var(--text);
+      display:flex; align-items:flex-start; gap:0.75rem; padding:0.65rem 0;
+      border-bottom:1px solid var(--border); font-size:0.82rem; color:var(--text); line-height:1.4;
     }
     .route-step:last-child { border-bottom:none; }
     .route-step-num {
@@ -150,10 +165,21 @@
     }
     .btn-route:hover { background: rgba(46,196,182,0.1); }
   </style>
-  <script src="https://maps.googleapis.com/maps/api/js?key=@(Configuration["GoogleMaps:ApiKey"])&libraries=places&callback=initCartMaps" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=@(Configuration["GoogleMaps:ApiKey"])&libraries=places&language=es&region=ES&callback=initCartMaps" async defer></script>
 </head>
 <body>
   <header>
+    <svg class="logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 10 Q4 5 9 5 L15 5 L15 14" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <rect x="6" y="14" width="30" height="19" rx="5" fill="#FF6B35"/>
+      <line x1="6" y1="24" x2="36" y2="24" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+      <circle cx="37" cy="8" r="7.5" fill="#2EC4B6"/>
+      <text x="37" y="12" font-family="sans-serif" font-size="9" font-weight="700" fill="white" text-anchor="middle">€</text>
+      <circle cx="14" cy="38.5" r="4.5" fill="#2EC4B6"/>
+      <circle cx="14" cy="38.5" r="2" fill="white" opacity=".85"/>
+      <circle cx="29" cy="38.5" r="4.5" fill="#2EC4B6"/>
+      <circle cx="29" cy="38.5" r="2" fill="white" opacity=".85"/>
+    </svg>
     <div class="logo-text">Super<span>Cart</span></div>
     <div style="margin-left:auto; display:flex; gap:0.75rem; align-items:center;">
       <button id="themeBtn" class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">☀️</button>

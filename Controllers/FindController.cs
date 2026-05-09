@@ -120,6 +120,10 @@ public class FindController : ControllerBase
 
                 .Where(p =>
 {
+    // Bonpreu ya buscó con el término traducido al catalán (ES→CA).
+    // Su API devuelve resultados relevantes directamente, no aplicar regex en español.
+    if (p.Market == DTOs.Market.BONPREU) return true;
+
     var name = RemoveAccents(p.Name.ToLower());
     return termParts.All(t =>
     {
@@ -168,62 +172,79 @@ public class FindController : ControllerBase
         }
     }
 
+    // ── ENDPOINT: agrupa productos por relevancia (llamado desde el frontend para "Relevancia + €/kg ↑") ──
+    [HttpPost("groupbyrelevance")]
+    public async Task<IActionResult> GroupByRelevance([FromBody] BestByMarketRequest request)
+    {
+        if (request.Products == null || request.Products.Count == 0)
+            return Ok(new { relevantes = new List<Product>(), dudosos = new List<Product>(), excluidos = new List<Product>() });
+
+        var grouped = await GroupByRelevanceInternal(request.Term, request.Products);
+        return Ok(new { relevantes = grouped.relevantes, dudosos = grouped.dudosos, excluidos = grouped.excluidos });
+    }
+
+    // ── Wrapper para mantener compatibilidad con el flujo de búsqueda normal ──
     private async Task<List<Product>> FilterByAIRelevance(string term, List<Product> products)
     {
-        if (products.Count == 0) return products;
+        var (relevantes, dudosos, _) = await GroupByRelevanceInternal(term, products);
+        // En la búsqueda normal incluimos relevantes + dudosos; sólo excluimos los claramente irrelevantes
+        return relevantes.Concat(dudosos).ToList();
+    }
 
-        // Mandamos solo índice, nombre y marca para no gastar tokens
-        var lines = products.Select((p, i) => $"{i}:{p.Brand} {p.Name}").ToList();
+    // ── Motor de clasificación por relevancia (tres niveles) ──
+    private async Task<(List<Product> relevantes, List<Product> dudosos, List<Product> excluidos)>
+        GroupByRelevanceInternal(string term, List<Product> products)
+    {
+        if (products.Count == 0) return (products, new List<Product>(), new List<Product>());
+
+        // Incluimos supermercado, nombre, precio y precio/unidad para dar contexto completo a la IA
+        var lines = products.Select((p, i) =>
+            $"{i}:{p.Market}|{p.Brand} {p.Name}|{p.Price:F2}€|{p.PriceUnitOrKg}").ToList();
         var productText = string.Join("\n", lines);
 
-        // var prompt = $@"Eres un filtro de relevancia para una web comparadora de precios de supermercados españoles.
-        // El usuario buscó: ""{term}""
+        var systemPrompt =
+            "Eres un clasificador de relevancia para SuperCart, comparador de precios de supermercados españoles. " +
+            "Tu respuesta es SIEMPRE JSON puro y válido, sin markdown, sin texto adicional, sin explicaciones.";
 
-        // Lista de productos encontrados (índice:nombre):
-        // {productText}
+        var userPrompt = $@"El usuario buscó: ""{term}""
 
-        // Contexto: esto es un supermercado, el usuario busca productos alimentarios o de droguería.
-        // Tu tarea:
-        // 1. Elimina productos claramente irrelevantes para la búsqueda (ej: si busca ""leche"" elimina ""leche corporal Nivea"")
-        // 2. Devuelve los índices ordenados de MÁS a MENOS relevante
+Lista de productos (índice:supermercado|nombre|precio|precio/unidad):
+{productText}
 
-        // Responde ÚNICAMENTE con un array JSON de índices. Ejemplo: [3,0,5,1,2]
-        // Sin texto adicional, sin explicaciones, solo el array.";
+Clasifica TODOS los índices en exactamente estas tres categorías:
+- ""relevantes"": el producto ES directamente lo que busca el usuario
+- ""dudosos"": tiene relación pero no es el foco principal (variante, formato especial, elaborado)
+- ""excluidos"": el término aparece como ingrediente secundario o es un producto claramente diferente
 
-        var prompt = $@"Eres un filtro de relevancia para una web comparadora de precios de supermercados españoles.
-        El usuario buscó: ""{term}""
+Ejemplos de clasificación:
+- Búsqueda ""leche"": relevantes=[leche entera, semidesnatada, desnatada, sin lactosa], dudosos=[batido de leche, leche condensada], excluidos=[leche corporal Nivea, galletas ""con leche""]
+- Búsqueda ""café"": relevantes=[café molido, en grano, soluble], dudosos=[capuchino, café con leche listo], excluidos=[crema corporal café, galletas sabor café]
+- Búsqueda ""huevos"": relevantes=[huevos M, L, XL, camperos, ecológicos], dudosos=[huevos de codorniz], excluidos=[mayonesa, pasta al huevo]
+- Búsqueda ""pollo"": relevantes=[pechuga, muslos, pollo entero, contramuslos], dudosos=[nuggets, hamburguesa de pollo], excluidos=[caldo de pollo, sopa de pollo]
 
-        Lista de productos (índice:nombre):
-        {productText}
-
-        Reglas estrictas:
-        1. El usuario busca el producto PRINCIPAL que indica el término, no productos que lo contengan como ingrediente o en el nombre de forma secundaria.
-        Ejemplo: si busca ""carne"", incluye filetes, pollo, ternera... pero NO ""carne de ñora"", ""salsa con carne"", ""croquetas de carne"".
-        Ejemplo: si busca ""leche"", incluye leche entera/desnatada... pero NO ""leche corporal"", ""galletas con leche"".
-        2. Ordena de MÁS a MENOS relevante: primero el producto más directo y simple, luego variantes.
-        3. Elimina cualquier producto donde el término aparece solo como ingrediente secundario o referencia.
-
-        Responde ÚNICAMENTE con un array JSON de índices ordenados. Ejemplo: [3,0,5,1]
-        Sin texto adicional.";
+Responde ÚNICAMENTE con este JSON (sin ningún texto antes ni después):
+{{""relevantes"":[índices...],"" dudosos"":[índices...],"" excluidos"":[índices...]}}";
 
         try
         {
             var (apiKey, available) = _keyRotator.GetNextKey();
             if (!available)
             {
-                Console.WriteLine("FilterByAI: todas las keys en cooldown, devolviendo sin filtrar.");
-                return products;
+                Console.WriteLine("GroupByRelevance: todas las keys en cooldown, sin filtrar.");
+                return (products, new List<Product>(), new List<Product>());
             }
+
             using var http = new System.Net.Http.HttpClient();
-            http.Timeout = TimeSpan.FromSeconds(10);
+            http.Timeout = TimeSpan.FromSeconds(15);
             http.DefaultRequestHeaders.Add("x-api-key", apiKey);
             http.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
 
             var body = new
             {
                 model = "claude-haiku-4-5-20251001",
-                max_tokens = 500,
-                messages = new[] { new { role = "user", content = prompt } }
+                max_tokens = 600,
+                system = systemPrompt,
+                messages = new[] { new { role = "user", content = userPrompt } }
             };
 
             var response = await http.PostAsync(
@@ -235,35 +256,62 @@ public class FindController : ControllerBase
             if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
             {
                 _keyRotator.MarkRateLimited(apiKey);
-                return products;
+                return (products, new List<Product>(), new List<Product>());
             }
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine("AI FILTER ERROR: " + response.StatusCode);
-                return products;
+                Console.WriteLine("AI GROUP ERROR: " + response.StatusCode);
+                return (products, new List<Product>(), new List<Product>());
             }
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = System.Text.Json.JsonDocument.Parse(json);
             var text = doc.RootElement
                 .GetProperty("content")[0]
-                .GetProperty("text").GetString() ?? "[]";
+                .GetProperty("text").GetString() ?? "{}";
 
-            Console.WriteLine("AI FILTER RESPONSE: " + text);
+            Console.WriteLine("AI GROUP RESPONSE: " + text);
 
-            var indices = System.Text.Json.JsonSerializer.Deserialize<List<int>>(text.Trim());
-            if (indices == null || indices.Count == 0) return products;
+            // Limpiar si la IA envuelve en ```json ... ```
+            var trimmed = text.Trim();
+            if (trimmed.StartsWith("```"))
+            {
+                var s = trimmed.IndexOf('{');
+                var e = trimmed.LastIndexOf('}');
+                if (s >= 0 && e > s) trimmed = trimmed.Substring(s, e - s + 1);
+            }
 
-            // Devuelve los productos en el orden que la IA decidió, descartando los no incluidos
-            return indices
-                .Where(i => i >= 0 && i < products.Count)
-                .Select(i => products[i])
-                .ToList();
+            using var parsed = System.Text.Json.JsonDocument.Parse(trimmed);
+            var root = parsed.RootElement;
+
+            List<int> GetIndices(string key)
+            {
+                if (!root.TryGetProperty(key, out var el)) return new List<int>();
+                return el.EnumerateArray()
+                    .Where(x => x.ValueKind == System.Text.Json.JsonValueKind.Number)
+                    .Select(x => x.GetInt32())
+                    .Where(i => i >= 0 && i < products.Count)
+                    .Distinct()
+                    .ToList();
+            }
+
+            var relevantes = GetIndices("relevantes").Select(i => products[i]).ToList();
+            var dudosos    = GetIndices("dudosos").Select(i => products[i]).ToList();
+            var excluidos  = GetIndices("excluidos").Select(i => products[i]).ToList();
+
+            // Fallback: si la IA no clasificó nada, devolver todo como relevante
+            if (relevantes.Count == 0 && dudosos.Count == 0)
+            {
+                Console.WriteLine("AI GROUP: clasificación vacía, usando fallback completo.");
+                return (products, new List<Product>(), new List<Product>());
+            }
+
+            return (relevantes, dudosos, excluidos);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("AI FILTER EXCEPTION: " + ex.Message);
-            return products; // fallback silencioso: nunca rompe la búsqueda
+            Console.WriteLine("AI GROUP EXCEPTION: " + ex.Message);
+            return (products, new List<Product>(), new List<Product>()); // fallback silencioso
         }
     }
 

@@ -30,9 +30,20 @@ public abstract class AbstractFinder : IFinder
     protected AbstractFinder(ILogger logger) => _logger = logger; // Camps privats es posa _ abans del nom _logger
                                                                   // LO MATEIX QUE - { _logger = logger; }      
 
+    /// <summary>
+    /// Hook de traducción: los finders pueden sobrescribir este método para adaptar
+    /// el término al idioma de su API antes de hacer la petición.
+    /// Por defecto devuelve el término sin modificar.
+    /// </summary>
+    protected virtual Task<string> TranslateTermAsync(string term) => Task.FromResult(term);
+
     public async Task<List<DTOs.Product>> FindProductsByTermAsync(string term)
     {
         var marketName = GetMarket().ToString();
+
+        // Cada finder puede adaptar el término (ej: Bonpreu traduce ES→CA)
+        term = await TranslateTermAsync(term);
+
         Console.WriteLine($"[{marketName}] Iniciando búsqueda: {term}");
         try
         {

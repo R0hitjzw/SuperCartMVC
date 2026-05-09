@@ -1,11 +1,29 @@
 // Services/Finders/Impl/BonpreuFinder.cs
 using System.Text.Json;
+using SuperCartMVC.Services;
 
 namespace SuperCartMVC.Services.Finders.Impl;
 
 public class BonpreuFinder : AbstractFinder
 {
-    public BonpreuFinder(ILogger<BonpreuFinder> logger) : base(logger) { }
+    private readonly CatalanTranslatorService _translator;
+
+    public BonpreuFinder(ILogger<BonpreuFinder> logger, CatalanTranslatorService translator)
+        : base(logger)
+    {
+        _translator = translator;
+    }
+
+    /// <summary>
+    /// Traduce el término ES→CA antes de consultar la API de Bonpreu.
+    /// Segunda búsqueda del mismo término: 0 tokens (caché estática).
+    /// </summary>
+    protected override async Task<string> TranslateTermAsync(string term)
+    {
+        var translated = await _translator.TranslateToCAAsync(term);
+        Console.WriteLine($"[BONPREU] ES→CA: '{term}' → '{translated}'");
+        return translated;
+    }
 
     // tag=web es obligatorio, sin él devuelve resultados distintos
     private const string UriTemplate =
