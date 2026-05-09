@@ -676,14 +676,18 @@
         display: flex;
         align-items: flex-start;
         min-height: calc(100vh - 73px);
+        padding-left: 230px;
       }
       .sidebar {
         width: 230px;
         flex-shrink: 0;
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        overflow-y: auto;
+        position: fixed;
+        top: 73px;
+        left: 0;
+        height: calc(100vh - 73px);
+        overflow: hidden;
+        overscroll-behavior: none;
+        z-index: 50;
         background: var(--bg2);
         border-right: 1px solid var(--border);
         padding: 1.25rem 0;
