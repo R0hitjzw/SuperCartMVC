@@ -115,6 +115,14 @@
     }
     .footer-link a { color: var(--teal); text-decoration: none; }
     .footer-link a:hover { text-decoration: underline; }
+
+    /* Mobile */
+    @@media (max-width: 480px) {
+      body { justify-content: flex-start; padding: 2rem 0; }
+      .card { border-radius: 0; border-left: none; border-right: none; max-width: 100%; }
+      .logo-text { font-size: 1.4rem; margin-bottom: 1.5rem; }
+    }
+    
   </style>
 </head>
 <body>
