@@ -57,9 +57,8 @@ El consumidor que quiere comprar "leche entera" no tiene forma sencilla de saber
 - Tema claro/oscuro con persistencia en localStorage ✅
 - Traducción automática ES→CA para Bonpreu ✅
 - Sort combinado "Relevancia + €/kg ↑" ✅
-
-**Pendiente:** despliegue en producción (myASP.net), migración SQLite → MSSQL, push a GitHub.
-
+- Desplegado en producción (Railway).
+https://supercart-production.up.railway.app
 ---
 
 ## 2. Arquitectura y Tecnología
@@ -70,7 +69,7 @@ El consumidor que quiere comprar "leche entera" no tiene forma sencilla de saber
 |------|-----------|
 | Backend | C# ASP.NET Core MVC (.NET 8) |
 | Frontend | Razor Views (.cshtml), Vanilla JS (ES2022+), CSS custom properties |
-| Base de datos | SQLite (desarrollo) / MSSQL previsto para producción |
+| Base de datos | SQLite (desarrollo y producción) |
 | ORM | Entity Framework Core |
 | Autenticación | ASP.NET Core Identity |
 | IA / LLM | Anthropic Claude Haiku (`claude-haiku-4-5-20251001`) |
@@ -112,7 +111,7 @@ Usada para tres propósitos distintos:
 ### Infraestructura
 
 - **Desarrollo:** `dotnet run` en local, SQLite como base de datos (archivo `supercart.db` generado automáticamente).
-- **Producción prevista:** myASP.net hosting, MSSQL Server.
+- **Producción prevista:** Railway hosting, SQLite.
 - Sin contenedores ni CI/CD implementado actualmente.
 
 ### Arquitectura general
@@ -478,7 +477,7 @@ Añadido como `protected virtual Task<string> TranslateTermAsync(string term) =>
 - **APIs no oficiales:** obtenidas por ingeniería inversa. Pueden cambiar o bloquearse sin previo aviso y romper los finders afectados.
 - **API keys en `appsettings.json`:** las claves de Anthropic y Google Maps están en el fichero de configuración. **No deben subirse a Git.** En producción, usar variables de entorno o un gestor de secretos.
 - **Google Maps key expuesta en frontend:** visible en el HTML renderizado. Restringir por referrer/dominio en Google Cloud Console.
-- **SQLite en producción:** no apto para escrituras concurrentes. Migración a MSSQL prevista.
+- **SQLite en producción:** no apto para escrituras concurrentes. Inyección de datos necesaria tras cada despliegue desde hosting.
 - **Sin rate limiting propio:** un usuario malicioso puede agotar cuotas de Anthropic y Google Maps.
 
 ### Consideraciones para auditoría técnica
@@ -492,12 +491,23 @@ Añadido como `protected virtual Task<string> TranslateTermAsync(string term) =>
 
 ## 6. DevOps / Operación
 
-### Deploy actual
+### Deploy 
+
+##### Actual
+
+Railways - ***https://supercart-production.up.railway.app***
+
+##### En producción
 
 ```bash
 cd SuperCartMVC
 dotnet run
 # http://localhost:5XXX  /  https://localhost:7XXX
+```
+
+```
+Railways 
+
 ```
 
 La base de datos SQLite se crea automáticamente en `supercart.db` al arrancar (EF Core Migrations aplicadas en startup si se configura así, o manualmente con `dotnet ef database update`).
@@ -547,13 +557,12 @@ PRODUCTOS DESPUES FILTRO AI: 3
 ```bash
 dotnet ef migrations add NombreMigracion
 dotnet ef database update
-```
 
-Para migrar a MSSQL: instalar `Microsoft.EntityFrameworkCore.SqlServer`, cambiar `UseSqlite` por `UseSqlServer` en `Program.cs`, actualizar connection string.
+Migración a MSSQL descartada.
 
 ### CI/CD
 
-No implementado. Workflow actual: desarrollo local → `dotnet build` → `dotnet publish -c Release` → subida manual a myASP.net.
+No implementado. Workflow actual: desarrollo local → `dotnet build` → `dotnet publish -c Release` → subida manual a Railway.
 
 ---
 
@@ -562,13 +571,13 @@ No implementado. Workflow actual: desarrollo local → `dotnet build` → `dotne
 ### Decisiones que justifican bien el proyecto
 
 **"¿Por qué ASP.NET Core MVC y no React + API REST separada?"**
-> MVC integra perfectamente Identity, EF Core y la generación de HTML en un único framework. Para un TFC que evalúa conocimiento full-stack en .NET, MVC es coherente con el stack del DAW y más fácil de desplegar en myASP.net.
+> MVC integra perfectamente Identity, EF Core y la generación de HTML en un único framework. Para un TFC que evalúa conocimiento full-stack en .NET, MVC es coherente con el stack del DAW y más fácil de desplegar en Railway.
 
 **"¿Por qué Claude Haiku y no un filtro manual más complejo?"**
 > Un filtro manual basado en listas de palabras o categorías nunca podría entender que "leche corporal Nivea" es irrelevante cuando se busca "leche". Haiku cuesta ~$0.00025 por llamada típica, tiene latencia ~300ms y el prompt en español da resultados excelentes para el contexto de supermercados españoles. El coste por búsqueda es despreciable.
 
-**"¿Por qué SQLite y no PostgreSQL desde el principio?"**
-> SQLite elimina dependencias de infraestructura en desarrollo: no necesita servidor, se configura en una línea, el archivo `.db` es portable. La migración a MSSQL (hosting de myASP.net) es trivial: cambiar el provider de EF Core y el connection string. EF Core abstrae completamente el motor de base de datos.
+**"¿Por qué SQLite"**
+> SQLite elimina dependencias de infraestructura en desarrollo: no necesita servidor, se configura en una línea, el archivo `.db` es portable.
 
 **"¿Por qué ingeniería inversa de las APIs?"**
 > Ningún supermercado ofrece API pública oficial para precios. La ingeniería inversa del tráfico de sus propias apps de compra online es la única vía técnicamente viable. Es el mismo enfoque que usan herramientas comerciales como chuletometro.es o SuperMercato.
@@ -620,13 +629,6 @@ No implementado. Workflow actual: desarrollo local → `dotnet build` → `dotne
 ---
 
 ## 8. Puntos Abiertos
-
-### TODOs importantes
-
-- [ ] **Push a GitHub**: el repositorio no está subido. Crítico antes de la entrega.
-- [ ] **Migración SQLite → MSSQL**: `Microsoft.EntityFrameworkCore.SqlServer` + cambiar `UseSqlite` por `UseSqlServer` en `Program.cs` + actualizar connection string.
-- [ ] **Despliegue en myASP.net**: `dotnet publish -c Release` + subida al hosting.
-- [ ] **Mover API keys a variables de entorno**: no deben estar en el repo.
 
 ### Deuda técnica
 
