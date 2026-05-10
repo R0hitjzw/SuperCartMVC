@@ -1,7 +1,9 @@
 # SuperCart — Comparador de Precios de Supermercado
 
+# ***https://supercart-production.up.railway.app***
+
 > Trabajo de Final de Curso · 2º DAW (Desarrollo de Aplicaciones Web)  
-> Aplicación web ASP.NET Core MVC con integración de IA y Google Maps
+> Aplicación web ASP.NET Core MVC con integración de IA Claude Haiku y Google Maps
 
 ---
 
