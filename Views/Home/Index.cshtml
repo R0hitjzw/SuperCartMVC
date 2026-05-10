@@ -1798,6 +1798,35 @@
         if (btn) btn.disabled = val === 0;
       }
 
+      async function submitPanelReview() {
+  if (!isAuth || panelStars === 0) return;
+  const comentario = document.getElementById('panelComment')?.value || '';
+  const token = getToken();
+
+  const btn = document.getElementById('panelBtnSubmit');
+  if (btn) btn.disabled = true;
+
+  const res = await fetch('/Review/Create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'RequestVerificationToken': token
+    },
+    body: `market=${encodeURIComponent(panelProduct.market)}&productName=${encodeURIComponent(panelProduct.name)}&productImage=${encodeURIComponent(panelProduct.image ?? '')}&estrellas=${panelStars}&comentario=${encodeURIComponent(comentario)}`
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    const successEl = document.getElementById('panelSuccess');
+    if (successEl) successEl.style.display = 'block';
+    setTimeout(() => {
+      openProductPanel(panelProduct.market, panelProduct.name, panelProduct.image ?? '');
+    }, 1000);
+  } else {
+    if (btn) btn.disabled = false;
+  }
+}
+
       /* ===== GOOGLE MAPS ROUTE ===== */
       let gmMap = null, gmDirectionsService = null, gmDirectionsRenderer = null, gmGeocoder = null;
       const darkMapStyle = [
