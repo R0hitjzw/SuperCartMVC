@@ -4,6 +4,7 @@ using SuperCartMVC.Services.Finders.Impl;
 // LOG IN DEPENDENCIES, AFEGIR A LA DI (injecció de dependències) PERQUE DESPRES EL CONTROLADOR PUGUI UTILITZAR-LOS
 using SuperCartMVC.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,7 +36,11 @@ builder.Services.AddSingleton<SuperCartMVC.Services.CatalanTranslatorService>();
 
 // REGISTRO DE SERVICIOS PARA LOG IN, AFEGIR A LA DI (injecció de dependències) PERQUE DESPRES EL CONTROLADOR PUGUI UTILITZAR-LOS
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=supercart.db"));
+{
+    var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+                  ?? Environment.GetEnvironmentVariable("DATABASE_URL")!;
+    options.UseNpgsql(connStr);
+});
 
 // configuració requirements de contrasenya, un digit minim, logitud, etc.
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
@@ -45,6 +50,10 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<AppDbContext>()
+    .SetApplicationName("SuperCartMVC");
 
 var app = builder.Build();
 
