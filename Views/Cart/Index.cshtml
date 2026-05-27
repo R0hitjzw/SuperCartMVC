@@ -38,12 +38,13 @@
   }
 
   body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-  header { padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--header-bg); backdrop-filter: blur(12px); z-index: 100; }
+  header { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--header-bg); backdrop-filter: blur(12px); z-index: 100; }
   .logo-icon { width: 36px; height: 36px; flex-shrink: 0; }
   .logo-text { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--orange); }
   .logo-text span { color: var(--text); }
   .btn-back { background: transparent; border: 1px solid var(--border); border-radius: 10px; padding: 0.45rem 0.85rem; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 0.83rem; cursor: pointer; text-decoration: none; transition: border-color 0.2s; white-space: nowrap; }
   .btn-back:hover { border-color: var(--orange); color: var(--text); }
+  .header-right { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; }
   .theme-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 0.35rem 0.55rem; font-size: 1rem; cursor: pointer; line-height: 1; transition: background 0.2s; flex-shrink: 0; }
   .theme-btn:hover { background: var(--border); }
   .page { max-width: 780px; margin: 0 auto; padding: 1.5rem 0.75rem 4rem; }
@@ -98,7 +99,7 @@
   @@media (max-width: 480px) {
     header { padding: 0.65rem 0.75rem; }
     .logo-text { font-size: 1.05rem; }
-    h1 { font-size: 1.35rem; }
+    h1 { font-size: 1.35rem; text-align: center; }
     .cart-row { gap: 0.5rem; padding: 0.6rem 0.7rem; }
     .cart-img, .cart-img-placeholder { width: 44px; height: 44px; }
     .cart-name { font-size: 0.8rem; }
@@ -162,6 +163,10 @@
   .panel-no-reviews { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1.5rem 0; }
   .panel-spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 2rem auto; }
   @@keyframes spin { to { transform: rotate(360deg); } }
+  @@media (max-width: 560px) {
+    header { flex-wrap: wrap; padding: 0.5rem 0.75rem; }
+    .header-right { margin-left: 0; width: 100%; justify-content: center; }
+  }
 </style>
   <script src="https://maps.googleapis.com/maps/api/js?key=@(Configuration["GoogleMaps:ApiKey"])&libraries=places&language=es&region=ES&callback=initCartMaps" async defer></script>
 </head>
@@ -179,7 +184,7 @@
       <circle cx="29" cy="38.5" r="2" fill="white" opacity=".85"/>
     </svg>
     <div class="logo-text">Super<span>Cart</span></div>
-    <div style="margin-left:auto; display:flex; gap:0.75rem; align-items:center;">
+    <div class="header-right">
       <button id="themeBtn" class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
       <a href="/" class="btn-back">← Volver al comparador</a>
     </div>
